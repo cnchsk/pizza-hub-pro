@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, ArrowLeft, Package } from "lucide-react";
+import { Plus, ArrowLeft, Package, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -14,6 +14,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +35,8 @@ const Menu = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newCategory, setNewCategory] = useState({ name: "", description: "" });
   const [saving, setSaving] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ type: "category" | "product"; id: string; name: string } | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -127,6 +139,110 @@ const Menu = () => {
     }
   };
 
+  const handleDeleteCategory = async (categoryId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("tenant_id")
+        .eq("id", user.id)
+        .single();
+
+      if (!profileData?.tenant_id) return;
+
+      // Get first category
+      const firstCategory = categories.find(c => c.id !== categoryId);
+      
+      if (!firstCategory) {
+        toast({
+          title: "Erro",
+          description: "Você precisa ter pelo menos uma categoria",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Move products to first category
+      const { error: updateError } = await supabase
+        .from("products")
+        .update({ category_id: firstCategory.id })
+        .eq("category_id", categoryId)
+        .eq("tenant_id", profileData.tenant_id);
+
+      if (updateError) throw updateError;
+
+      // Delete category
+      const { error: deleteError } = await supabase
+        .from("categories")
+        .delete()
+        .eq("id", categoryId);
+
+      if (deleteError) throw deleteError;
+
+      toast({
+        title: "Sucesso",
+        description: "Categoria removida e produtos movidos com sucesso!",
+      });
+
+      loadData();
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao remover categoria",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+      // Delete product variations first
+      const { error: variationsError } = await supabase
+        .from("product_variations")
+        .delete()
+        .eq("product_id", productId);
+
+      if (variationsError) throw variationsError;
+
+      // Delete product
+      const { error: productError } = await supabase
+        .from("products")
+        .delete()
+        .eq("id", productId);
+
+      if (productError) throw productError;
+
+      toast({
+        title: "Sucesso",
+        description: "Produto removido com sucesso!",
+      });
+
+      loadData();
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao remover produto",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const confirmDelete = () => {
+    if (!itemToDelete) return;
+    
+    if (itemToDelete.type === "category") {
+      handleDeleteCategory(itemToDelete.id);
+    } else {
+      handleDeleteProduct(itemToDelete.id);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -224,7 +340,20 @@ const Menu = () => {
             <div className="grid md:grid-cols-3 gap-4">
               {categories.map((category) => (
                 <Card key={category.id} className="p-4 hover:shadow-medium transition-smooth">
-                  <h3 className="font-bold mb-2">{category.name}</h3>
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-bold">{category.name}</h3>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => {
+                        setItemToDelete({ type: "category", id: category.id, name: category.name });
+                        setDeleteDialogOpen(true);
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                   <p className="text-sm text-muted-foreground">{category.description}</p>
                 </Card>
               ))}
@@ -270,7 +399,20 @@ const Menu = () => {
                     />
                   )}
                   <div className="p-4">
-                    <h3 className="font-bold mb-2">{product.name}</h3>
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="font-bold">{product.name}</h3>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => {
+                          setItemToDelete({ type: "product", id: product.id, name: product.name });
+                          setDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                     <p className="text-sm text-muted-foreground mb-2">{product.description}</p>
                     <p className="text-lg font-bold text-primary">
                       R$ {Number(product.base_price).toFixed(2)}
@@ -281,6 +423,41 @@ const Menu = () => {
             </div>
           )}
         </Card>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                {itemToDelete?.type === "category" ? (
+                  <>
+                    Tem certeza que deseja remover a categoria <strong>{itemToDelete?.name}</strong>?
+                    <br /><br />
+                    Os produtos desta categoria serão movidos para a primeira categoria disponível.
+                  </>
+                ) : (
+                  <>
+                    Tem certeza que deseja remover o produto <strong>{itemToDelete?.name}</strong>?
+                    <br /><br />
+                    Esta ação não pode ser desfeita.
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setItemToDelete(null)}>
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Remover
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );
