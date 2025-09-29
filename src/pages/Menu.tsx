@@ -236,7 +236,10 @@ const Menu = () => {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">Produtos</h2>
-            <Button className="gradient-primary text-primary-foreground shadow-medium hover:shadow-glow transition-smooth">
+            <Button 
+              onClick={() => navigate("/menu/add-product")}
+              className="gradient-primary text-primary-foreground shadow-medium hover:shadow-glow transition-smooth"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Novo Produto
             </Button>
@@ -248,7 +251,10 @@ const Menu = () => {
               <p className="text-muted-foreground mb-4">
                 Você ainda não possui produtos cadastrados
               </p>
-              <Button className="gradient-primary text-primary-foreground">
+              <Button 
+                onClick={() => navigate("/menu/add-product")}
+                className="gradient-primary text-primary-foreground"
+              >
                 Criar Primeiro Produto
               </Button>
             </div>
