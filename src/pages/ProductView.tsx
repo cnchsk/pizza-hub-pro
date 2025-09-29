@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 
 interface Variation {
   id: string;
@@ -25,12 +25,24 @@ const ProductView = () => {
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     loadProduct();
   }, [id]);
+
+  useEffect(() => {
+    if (!api) return;
+
+    setCurrent(api.selectedScrollSnap());
+
+    api.on("select", () => {
+      setCurrent(api.selectedScrollSnap());
+    });
+  }, [api]);
 
   const loadProduct = async () => {
     try {
@@ -164,7 +176,14 @@ const ProductView = () => {
           <div className="space-y-4">
             {images.length > 0 ? (
               <>
-                <Carousel className="w-full">
+                <Carousel 
+                  className="w-full"
+                  setApi={setApi}
+                  opts={{
+                    align: "start",
+                    loop: true,
+                  }}
+                >
                   <CarouselContent>
                     {images.map((img, index) => (
                       <CarouselItem key={index}>
@@ -191,7 +210,12 @@ const ProductView = () => {
                     {images.map((img, index) => (
                       <button
                         key={index}
-                        className="aspect-square rounded-lg overflow-hidden border-2 transition-all hover-scale border-border hover:border-primary"
+                        onClick={() => api?.scrollTo(index)}
+                        className={`aspect-square rounded-lg overflow-hidden border-2 transition-all hover-scale ${
+                          current === index 
+                            ? "border-primary" 
+                            : "border-border hover:border-primary/50"
+                        }`}
                       >
                         <img
                           src={img}
