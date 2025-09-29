@@ -390,7 +390,11 @@ const Menu = () => {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {products.map((product) => (
-                <Card key={product.id} className="overflow-hidden hover:shadow-medium transition-smooth">
+                <Card 
+                  key={product.id} 
+                  className="overflow-hidden hover:shadow-medium transition-smooth cursor-pointer"
+                  onClick={() => navigate(`/menu/product/${product.id}`)}
+                >
                   {product.image_url && (
                     <img 
                       src={product.image_url} 
@@ -401,7 +405,7 @@ const Menu = () => {
                   <div className="p-4">
                     <div className="flex items-start justify-between mb-2">
                       <h3 className="font-bold">{product.name}</h3>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                         <Button
                           variant="ghost"
                           size="icon"
