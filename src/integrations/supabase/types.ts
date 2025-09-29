@@ -593,6 +593,10 @@ export type Database = {
         Args: { p_tenant_id: string; p_user_id: string }
         Returns: string
       }
+      get_user_tenant_id: {
+        Args: { user_id: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
