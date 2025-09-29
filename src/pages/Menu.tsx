@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, ArrowLeft, Package, Trash2 } from "lucide-react";
+import { Plus, ArrowLeft, Package, Trash2, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -401,17 +401,27 @@ const Menu = () => {
                   <div className="p-4">
                     <div className="flex items-start justify-between mb-2">
                       <h3 className="font-bold">{product.name}</h3>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => {
-                          setItemToDelete({ type: "product", id: product.id, name: product.name });
-                          setDeleteDialogOpen(true);
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => navigate(`/menu/edit-product/${product.id}`)}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => {
+                            setItemToDelete({ type: "product", id: product.id, name: product.name });
+                            setDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">{product.description}</p>
                     <p className="text-lg font-bold text-primary">
