@@ -5,11 +5,26 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, ArrowLeft, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 const Menu = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [newCategory, setNewCategory] = useState({ name: "", description: "" });
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -59,6 +74,59 @@ const Menu = () => {
     }
   };
 
+  const handleCreateCategory = async () => {
+    if (!newCategory.name.trim()) {
+      toast({
+        title: "Erro",
+        description: "O nome da categoria é obrigatório",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("tenant_id")
+        .eq("id", user.id)
+        .single();
+
+      if (!profileData?.tenant_id) return;
+
+      const { error } = await supabase
+        .from("categories")
+        .insert({
+          name: newCategory.name,
+          description: newCategory.description,
+          tenant_id: profileData.tenant_id,
+          display_order: categories.length,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Categoria criada com sucesso!",
+      });
+
+      setNewCategory({ name: "", description: "" });
+      setDialogOpen(false);
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao criar categoria",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -89,10 +157,54 @@ const Menu = () => {
         <Card className="p-6 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">Categorias</h2>
-            <Button className="gradient-primary text-primary-foreground shadow-medium hover:shadow-glow transition-smooth">
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Categoria
-            </Button>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="gradient-primary text-primary-foreground shadow-medium hover:shadow-glow transition-smooth">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nova Categoria
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Nova Categoria</DialogTitle>
+                  <DialogDescription>
+                    Adicione uma nova categoria ao seu cardápio
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="name">Nome *</Label>
+                    <Input
+                      id="name"
+                      value={newCategory.name}
+                      onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                      placeholder="Ex: Pizzas Tradicionais"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="description">Descrição</Label>
+                    <Textarea
+                      id="description"
+                      value={newCategory.description}
+                      onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
+                      placeholder="Descreva esta categoria (opcional)"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button 
+                    onClick={handleCreateCategory}
+                    disabled={saving}
+                    className="gradient-primary text-primary-foreground"
+                  >
+                    {saving ? "Salvando..." : "Criar Categoria"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {categories.length === 0 ? (
@@ -101,7 +213,10 @@ const Menu = () => {
               <p className="text-muted-foreground mb-4">
                 Você ainda não possui categorias cadastradas
               </p>
-              <Button className="gradient-primary text-primary-foreground">
+              <Button 
+                className="gradient-primary text-primary-foreground"
+                onClick={() => setDialogOpen(true)}
+              >
                 Criar Primeira Categoria
               </Button>
             </div>

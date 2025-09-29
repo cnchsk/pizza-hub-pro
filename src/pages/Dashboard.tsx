@@ -126,9 +126,9 @@ const Dashboard = () => {
               Gerenciar Cardápio
             </Button>
             <Button 
+              onClick={() => navigate("/orders")}
               variant="outline" 
               className="h-24 border-2 hover:border-primary transition-smooth"
-              disabled
             >
               <ShoppingCart className="w-6 h-6 mr-2" />
               Ver Pedidos
