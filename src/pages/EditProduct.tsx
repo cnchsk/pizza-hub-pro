@@ -32,9 +32,9 @@ const EditProduct = () => {
   const [basePrice, setBasePrice] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState<any[]>([]);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
   const [variations, setVariations] = useState<Variation[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -88,8 +88,11 @@ const EditProduct = () => {
         setIngredients(descParts[1] || "");
         setBasePrice(productData.base_price.toString());
         setCategoryId(productData.category_id);
-        setExistingImageUrl(productData.image_url);
-        setImagePreview(productData.image_url);
+        
+        // Load existing images
+        const images = Array.isArray(productData.images) ? productData.images as string[] : [];
+        setExistingImages(images);
+        setImagePreviews(images);
       }
 
       // Load variations
@@ -123,15 +126,39 @@ const EditProduct = () => {
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
+    const files = Array.from(e.target.files || []);
+    const totalImages = existingImages.length + imageFiles.length + files.length;
+    
+    if (totalImages > 6) {
+      toast({
+        title: "Limite excedido",
+        description: "Você pode ter no máximo 6 fotos",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setImageFiles([...imageFiles, ...files]);
+    
+    files.forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+        setImagePreviews((prev) => [...prev, reader.result as string]);
       };
       reader.readAsDataURL(file);
-    }
+    });
+  };
+
+  const removeExistingImage = (index: number) => {
+    setExistingImages(existingImages.filter((_, i) => i !== index));
+    setImagePreviews(imagePreviews.filter((_, i) => i !== index));
+  };
+
+  const removeNewImage = (index: number) => {
+    const existingCount = existingImages.length;
+    const newImageIndex = index - existingCount;
+    setImageFiles(imageFiles.filter((_, i) => i !== newImageIndex));
+    setImagePreviews(imagePreviews.filter((_, i) => i !== index));
   };
 
   const addVariation = () => {
@@ -198,10 +225,10 @@ const EditProduct = () => {
 
       if (!profileData?.tenant_id) return;
 
-      let imageUrl = existingImageUrl;
+      const imageUrls: string[] = [...existingImages];
 
-      // Upload new image if exists
-      if (imageFile) {
+      // Upload new images
+      for (const imageFile of imageFiles) {
         const fileExt = imageFile.name.split(".").pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
         const filePath = `${profileData.tenant_id}/${fileName}`;
@@ -216,7 +243,7 @@ const EditProduct = () => {
           .from("products")
           .getPublicUrl(filePath);
 
-        imageUrl = publicUrl;
+        imageUrls.push(publicUrl);
       }
 
       // Update product
@@ -227,7 +254,8 @@ const EditProduct = () => {
           description: `${description}\n\nIngredientes: ${ingredients}`,
           base_price: parseFloat(basePrice),
           category_id: categoryId,
-          image_url: imageUrl,
+          image_url: imageUrls[0] || null,
+          images: imageUrls,
         })
         .eq("id", id);
 
@@ -309,44 +337,51 @@ const EditProduct = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Image Upload */}
             <div className="space-y-2">
-              <Label>Foto do Produto</Label>
-              <div className="flex flex-col items-center gap-4">
-                {imagePreview ? (
-                  <div className="relative w-full h-64 rounded-lg overflow-hidden">
+              <Label>Fotos do Produto (até 6)</Label>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                {imagePreviews.map((preview, index) => (
+                  <div key={index} className="relative aspect-square rounded-lg overflow-hidden">
                     <img
-                      src={imagePreview}
-                      alt="Preview"
+                      src={preview}
+                      alt={`Preview ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                     <Button
                       type="button"
                       variant="destructive"
                       size="icon"
-                      className="absolute top-2 right-2"
+                      className="absolute top-2 right-2 h-8 w-8"
                       onClick={() => {
-                        setImageFile(null);
-                        setImagePreview(null);
-                        setExistingImageUrl(null);
+                        if (index < existingImages.length) {
+                          removeExistingImage(index);
+                        } else {
+                          removeNewImage(index);
+                        }
                       }}
                     >
                       <X className="w-4 h-4" />
                     </Button>
                   </div>
-                ) : (
-                  <label className="w-full h-64 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-smooth">
-                    <Upload className="w-12 h-12 text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      Clique para fazer upload
+                ))}
+                {imagePreviews.length < 6 && (
+                  <label className="aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-smooth">
+                    <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+                    <p className="text-xs text-muted-foreground text-center px-2">
+                      Adicionar foto
                     </p>
                     <input
                       type="file"
                       accept="image/*"
+                      multiple
                       onChange={handleImageChange}
                       className="hidden"
                     />
                   </label>
                 )}
               </div>
+              <p className="text-xs text-muted-foreground">
+                {imagePreviews.length} de 6 fotos adicionadas
+              </p>
             </div>
 
             {/* Category */}
