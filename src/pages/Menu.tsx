@@ -399,7 +399,8 @@ const Menu = () => {
                     <img 
                       src={product.image_url} 
                       alt={product.name}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-48 object-cover select-none"
+                      draggable="false"
                     />
                   )}
                   <div className="p-4">

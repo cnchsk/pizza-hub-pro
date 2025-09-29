@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 interface Variation {
   id: string;
@@ -23,7 +24,6 @@ const ProductView = () => {
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [quantity, setQuantity] = useState(1);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -164,58 +164,40 @@ const ProductView = () => {
           <div className="space-y-4">
             {images.length > 0 ? (
               <>
-                <div className="relative w-full h-96 rounded-lg overflow-hidden shadow-medium">
-                  <img
-                    src={images[currentImageIndex]}
-                    alt={product.name}
-                    className="w-full h-full object-cover animate-fade-in"
-                  />
+                <Carousel className="w-full">
+                  <CarouselContent>
+                    {images.map((img, index) => (
+                      <CarouselItem key={index}>
+                        <div className="relative w-full h-96 rounded-lg overflow-hidden shadow-medium">
+                          <img
+                            src={img}
+                            alt={`${product.name} ${index + 1}`}
+                            className="w-full h-full object-cover select-none"
+                            draggable="false"
+                          />
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
                   {images.length > 1 && (
                     <>
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        className="absolute left-2 top-1/2 -translate-y-1/2 shadow-lg hover:scale-110 transition-all"
-                        onClick={() => setCurrentImageIndex((currentImageIndex - 1 + images.length) % images.length)}
-                      >
-                        <ArrowLeft className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 shadow-lg hover:scale-110 transition-all"
-                        onClick={() => setCurrentImageIndex((currentImageIndex + 1) % images.length)}
-                      >
-                        <ArrowLeft className="w-4 h-4 rotate-180" />
-                      </Button>
-                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/30 backdrop-blur-sm px-3 py-2 rounded-full">
-                        {images.map((_, index) => (
-                          <button
-                            key={index}
-                            className={`w-2 h-2 rounded-full transition-all ${
-                              index === currentImageIndex ? "bg-white w-6" : "bg-white/50"
-                            }`}
-                            onClick={() => setCurrentImageIndex(index)}
-                          />
-                        ))}
-                      </div>
+                      <CarouselPrevious className="left-2" />
+                      <CarouselNext className="right-2" />
                     </>
                   )}
-                </div>
+                </Carousel>
                 {images.length > 1 && (
                   <div className="grid grid-cols-6 gap-2">
                     {images.map((img, index) => (
                       <button
                         key={index}
-                        onClick={() => setCurrentImageIndex(index)}
-                        className={`aspect-square rounded-lg overflow-hidden border-2 transition-all hover-scale ${
-                          index === currentImageIndex ? "border-primary shadow-medium" : "border-transparent opacity-70 hover:opacity-100"
-                        }`}
+                        className="aspect-square rounded-lg overflow-hidden border-2 transition-all hover-scale border-border hover:border-primary"
                       >
                         <img
                           src={img}
                           alt={`${product.name} ${index + 1}`}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover select-none"
+                          draggable="false"
                         />
                       </button>
                     ))}
