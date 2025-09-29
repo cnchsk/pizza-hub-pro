@@ -164,18 +164,18 @@ const ProductView = () => {
           <div className="space-y-4">
             {images.length > 0 ? (
               <>
-                <div className="relative w-full h-96 rounded-lg overflow-hidden">
+                <div className="relative w-full h-96 rounded-lg overflow-hidden shadow-medium group">
                   <img
                     src={images[currentImageIndex]}
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover animate-fade-in"
                   />
                   {images.length > 1 && (
                     <>
                       <Button
                         variant="secondary"
                         size="icon"
-                        className="absolute left-2 top-1/2 -translate-y-1/2"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => setCurrentImageIndex((currentImageIndex - 1 + images.length) % images.length)}
                       >
                         <ArrowLeft className="w-4 h-4" />
@@ -183,12 +183,12 @@ const ProductView = () => {
                       <Button
                         variant="secondary"
                         size="icon"
-                        className="absolute right-2 top-1/2 -translate-y-1/2"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => setCurrentImageIndex((currentImageIndex + 1) % images.length)}
                       >
                         <ArrowLeft className="w-4 h-4 rotate-180" />
                       </Button>
-                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/30 backdrop-blur-sm px-3 py-2 rounded-full">
                         {images.map((_, index) => (
                           <button
                             key={index}
@@ -208,8 +208,8 @@ const ProductView = () => {
                       <button
                         key={index}
                         onClick={() => setCurrentImageIndex(index)}
-                        className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                          index === currentImageIndex ? "border-primary" : "border-transparent"
+                        className={`aspect-square rounded-lg overflow-hidden border-2 transition-all hover-scale ${
+                          index === currentImageIndex ? "border-primary shadow-medium" : "border-transparent opacity-70 hover:opacity-100"
                         }`}
                       >
                         <img
