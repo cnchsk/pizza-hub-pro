@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Pizza, ShoppingCart, Star, Users, LogOut, Package } from "lucide-react";
+import { Pizza, ShoppingCart, Star, Users, LogOut, Package, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Dashboard = () => {
@@ -81,14 +81,24 @@ const Dashboard = () => {
             </div>
           </div>
           
-          <Button 
-            variant="ghost" 
-            onClick={handleLogout}
-            className="transition-smooth"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Sair
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate("/settings")}
+              className="transition-smooth"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Configurações
+            </Button>
+            <Button 
+              variant="ghost" 
+              onClick={handleLogout}
+              className="transition-smooth"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sair
+            </Button>
+          </div>
         </div>
       </header>
 
