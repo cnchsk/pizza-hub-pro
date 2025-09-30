@@ -127,7 +127,7 @@ const Dashboard = () => {
         {/* Quick Actions */}
         <Card className="p-6 mb-8">
           <h3 className="text-xl font-bold mb-4">Ações Rápidas</h3>
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Button 
               onClick={() => navigate("/menu")}
               className="h-24 gradient-primary text-primary-foreground shadow-medium hover:shadow-glow transition-smooth"
@@ -142,6 +142,14 @@ const Dashboard = () => {
             >
               <ShoppingCart className="w-6 h-6 mr-2" />
               Ver Pedidos
+            </Button>
+            <Button 
+              onClick={() => navigate("/customers")}
+              variant="outline" 
+              className="h-24 border-2 hover:border-primary transition-smooth"
+            >
+              <Users className="w-6 h-6 mr-2" />
+              Clientes
             </Button>
             <Button 
               variant="outline" 
