@@ -33,7 +33,9 @@ const Menu = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [newCategory, setNewCategory] = useState({ name: "", description: "" });
+  const [editCategory, setEditCategory] = useState<{ id: string; name: string; description: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ type: "category" | "product"; id: string; name: string } | null>(null);
@@ -131,6 +133,47 @@ const Menu = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao criar categoria",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEditCategory = async () => {
+    if (!editCategory || !editCategory.name.trim()) {
+      toast({
+        title: "Erro",
+        description: "O nome da categoria é obrigatório",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("categories")
+        .update({
+          name: editCategory.name,
+          description: editCategory.description,
+        })
+        .eq("id", editCategory.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Categoria atualizada com sucesso!",
+      });
+
+      setEditCategory(null);
+      setEditDialogOpen(false);
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar categoria",
         description: error.message,
         variant: "destructive",
       });
@@ -342,17 +385,34 @@ const Menu = () => {
                 <Card key={category.id} className="p-4 hover:shadow-medium transition-smooth">
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="font-bold">{category.name}</h3>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => {
-                        setItemToDelete({ type: "category", id: category.id, name: category.name });
-                        setDeleteDialogOpen(true);
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => {
+                          setEditCategory({
+                            id: category.id,
+                            name: category.name,
+                            description: category.description || "",
+                          });
+                          setEditDialogOpen(true);
+                        }}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => {
+                          setItemToDelete({ type: "category", id: category.id, name: category.name });
+                          setDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                   <p className="text-sm text-muted-foreground">{category.description}</p>
                 </Card>
@@ -438,6 +498,50 @@ const Menu = () => {
             </div>
           )}
         </Card>
+
+        {/* Edit Category Dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar Categoria</DialogTitle>
+              <DialogDescription>
+                Atualize as informações da categoria
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-name">Nome *</Label>
+                <Input
+                  id="edit-name"
+                  value={editCategory?.name || ""}
+                  onChange={(e) => setEditCategory(editCategory ? { ...editCategory, name: e.target.value } : null)}
+                  placeholder="Ex: Pizzas Tradicionais"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-description">Descrição</Label>
+                <Textarea
+                  id="edit-description"
+                  value={editCategory?.description || ""}
+                  onChange={(e) => setEditCategory(editCategory ? { ...editCategory, description: e.target.value } : null)}
+                  placeholder="Descreva esta categoria (opcional)"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleEditCategory}
+                disabled={saving}
+                className="gradient-primary text-primary-foreground"
+              >
+                {saving ? "Salvando..." : "Salvar Alterações"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
