@@ -600,6 +600,17 @@ export type Database = {
         Args: { user_id: string }
         Returns: string
       }
+      validate_coupon_code: {
+        Args: { p_code: string; p_order_amount: number; p_tenant_id: string }
+        Returns: {
+          code: string
+          discount_type: string
+          discount_value: number
+          id: string
+          is_valid: boolean
+          message: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
