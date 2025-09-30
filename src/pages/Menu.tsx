@@ -381,42 +381,48 @@ const Menu = () => {
             </div>
           ) : (
             <div className="grid md:grid-cols-3 gap-4">
-              {categories.map((category) => (
-                <Card key={category.id} className="p-4 hover:shadow-medium transition-smooth">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-bold">{category.name}</h3>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => {
-                          setEditCategory({
-                            id: category.id,
-                            name: category.name,
-                            description: category.description || "",
-                          });
-                          setEditDialogOpen(true);
-                        }}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => {
-                          setItemToDelete({ type: "category", id: category.id, name: category.name });
-                          setDeleteDialogOpen(true);
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+              {categories.map((category) => {
+                const productCount = products.filter(p => p.category_id === category.id).length;
+                return (
+                  <Card key={category.id} className="p-4 hover:shadow-medium transition-smooth">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold">{category.name}</h3>
+                        <span className="text-blue-900 font-bold">({productCount})</span>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setEditCategory({
+                              id: category.id,
+                              name: category.name,
+                              description: category.description || "",
+                            });
+                            setEditDialogOpen(true);
+                          }}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => {
+                            setItemToDelete({ type: "category", id: category.id, name: category.name });
+                            setDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{category.description}</p>
-                </Card>
-              ))}
+                    <p className="text-sm text-muted-foreground">{category.description}</p>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </Card>
