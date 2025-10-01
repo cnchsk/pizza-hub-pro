@@ -8,7 +8,6 @@ import { MapPin } from "lucide-react";
 interface DeliveryMapProps {
   postalCode: string;
   deliveryRadiusKm: number;
-  onRadiusChange: (radius: number) => void;
 }
 
 const containerStyle = {
@@ -22,7 +21,7 @@ const defaultCenter = {
   lng: -46.633308
 };
 
-const DeliveryMap = ({ postalCode, deliveryRadiusKm, onRadiusChange }: DeliveryMapProps) => {
+const DeliveryMap = ({ postalCode, deliveryRadiusKm }: DeliveryMapProps) => {
   const [center, setCenter] = useState(defaultCenter);
   const [loading, setLoading] = useState(false);
   const [apiKey, setApiKey] = useState("");
@@ -115,22 +114,6 @@ const DeliveryMap = ({ postalCode, deliveryRadiusKm, onRadiusChange }: DeliveryM
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="radius-display">Raio de Entrega (km)</Label>
-          <Input
-            id="radius-display"
-            type="number"
-            step="0.1"
-            min="0"
-            value={deliveryRadiusKm}
-            onChange={(e) => onRadiusChange(parseFloat(e.target.value) || 0)}
-            placeholder="5.0"
-          />
-          <p className="text-sm text-muted-foreground">
-            Ajuste o raio para visualizar a área de cobertura no mapa
-          </p>
-        </div>
-
         {loading ? (
           <div className="h-[400px] flex items-center justify-center bg-muted rounded-lg">
             <p className="text-muted-foreground">Carregando mapa...</p>

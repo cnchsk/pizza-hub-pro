@@ -399,7 +399,6 @@ const Settings = () => {
           <DeliveryMap
             postalCode={tenantData.postal_code || ""}
             deliveryRadiusKm={tenantData.delivery_radius_km}
-            onRadiusChange={(radius) => setTenantData({ ...tenantData, delivery_radius_km: radius })}
           />
         </div>
       </div>
