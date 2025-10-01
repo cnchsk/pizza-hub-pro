@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Variation {
   id: string;
@@ -24,6 +25,7 @@ const ProductView = () => {
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [quantity, setQuantity] = useState(1);
+  const [observations, setObservations] = useState("");
   const [loading, setLoading] = useState(true);
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
@@ -117,9 +119,10 @@ const ProductView = () => {
   };
 
   const handleAddToCart = () => {
+    const observationsText = observations.trim() ? `\nObservações: ${observations}` : "";
     toast({
       title: "Produto adicionado!",
-      description: `${quantity}x ${product?.name} - R$ ${calculateTotal().toFixed(2)}`,
+      description: `${quantity}x ${product?.name} - R$ ${calculateTotal().toFixed(2)}${observationsText}`,
     });
   };
 
@@ -411,6 +414,20 @@ const ProductView = () => {
                 </div>
               </Card>
             )}
+
+            {/* Observations */}
+            <Card className="p-4">
+              <Label htmlFor="observations" className="text-base font-semibold mb-3 block">
+                Observações
+              </Label>
+              <Textarea
+                id="observations"
+                placeholder="Adicione observações sobre seu pedido (ex: sem cebola, bem passado, etc.)"
+                value={observations}
+                onChange={(e) => setObservations(e.target.value)}
+                className="min-h-[100px] resize-none"
+              />
+            </Card>
 
             {/* Quantity and Total */}
             <Card className="p-4">
