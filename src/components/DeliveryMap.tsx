@@ -6,8 +6,9 @@ import { MapPin } from "lucide-react";
 interface DeliveryMapProps {
   postalCode: string;
   deliveryRadiusKm: number;
-  apiKey: string;
 }
+
+const GOOGLE_MAPS_API_KEY = "AIzaSyDgb3K7YRBGUQBKyaNopoC3WXSOIdV6vKU";
 
 const containerStyle = {
   width: '100%',
@@ -20,24 +21,24 @@ const defaultCenter = {
   lng: -46.633308
 };
 
-const DeliveryMap = ({ postalCode, deliveryRadiusKm, apiKey }: DeliveryMapProps) => {
+const DeliveryMap = ({ postalCode, deliveryRadiusKm }: DeliveryMapProps) => {
   const [center, setCenter] = useState(defaultCenter);
   const [loading, setLoading] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     // Geocode the postal code to get coordinates
-    if (postalCode && postalCode.length >= 8 && apiKey) {
+    if (postalCode && postalCode.length >= 8) {
       geocodePostalCode(postalCode);
     }
-  }, [postalCode, apiKey]);
+  }, [postalCode]);
 
   const geocodePostalCode = async (cep: string) => {
     setLoading(true);
     try {
       const cleanCep = cep.replace(/\D/g, '');
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${cleanCep},Brazil&key=${apiKey}`
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${cleanCep},Brazil&key=${GOOGLE_MAPS_API_KEY}`
       );
       const data = await response.json();
       
@@ -63,24 +64,6 @@ const DeliveryMap = ({ postalCode, deliveryRadiusKm, apiKey }: DeliveryMapProps)
     fillOpacity: 0.15,
   };
 
-  if (!apiKey) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="w-5 h-5" />
-            Mapa de Entrega
-          </CardTitle>
-          <CardDescription>Configure sua chave da API do Google Maps nas configurações gerais</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Para visualizar o mapa, adicione sua Google Maps API Key no campo acima.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card>
@@ -100,7 +83,7 @@ const DeliveryMap = ({ postalCode, deliveryRadiusKm, apiKey }: DeliveryMapProps)
           </div>
         ) : (
           <LoadScript 
-            googleMapsApiKey={apiKey}
+            googleMapsApiKey={GOOGLE_MAPS_API_KEY}
             onLoad={() => setIsLoaded(true)}
           >
             {isLoaded && (
