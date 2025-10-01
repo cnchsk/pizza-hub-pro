@@ -471,7 +471,9 @@ const Menu = () => {
                   )}
                   <div className="p-4">
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-bold">{product.name}</h3>
+                      <h3 className="font-bold">
+                        {product.categories?.name ? `${product.categories.name} / ` : ""}{product.name}
+                      </h3>
                       <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                         <Button
                           variant="ghost"
