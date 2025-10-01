@@ -36,6 +36,24 @@ const ProductView = () => {
   }, [id]);
 
   useEffect(() => {
+    if (variations.length > 0) {
+      const initialSelections: Record<string, string> = {};
+      const variationTypes = ['size', 'border', 'dough', 'extra', 'topping'];
+      
+      variationTypes.forEach(type => {
+        const typeVariations = variations.filter(v => v.variation_type === type);
+        if (typeVariations.length > 0 && !selectedVariations[type]) {
+          initialSelections[type] = typeVariations[0].id;
+        }
+      });
+
+      if (Object.keys(initialSelections).length > 0) {
+        setSelectedVariations(prev => ({ ...prev, ...initialSelections }));
+      }
+    }
+  }, [variations]);
+
+  useEffect(() => {
     if (!api) return;
 
     setCurrent(api.selectedScrollSnap());
