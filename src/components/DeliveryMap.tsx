@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { GoogleMap, LoadScript, Marker, Circle } from "@react-google-maps/api";
+import { GoogleMap, useLoadScript, Marker, Circle } from "@react-google-maps/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin } from "lucide-react";
+import { MapPin, AlertCircle } from "lucide-react";
 
 interface DeliveryMapProps {
   postalCode: string;
@@ -24,7 +24,11 @@ const defaultCenter = {
 const DeliveryMap = ({ postalCode, deliveryRadiusKm }: DeliveryMapProps) => {
   const [center, setCenter] = useState(defaultCenter);
   const [loading, setLoading] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    preventGoogleFontsLoading: true,
+  });
 
   useEffect(() => {
     // Geocode the postal code to get coordinates
@@ -77,47 +81,56 @@ const DeliveryMap = ({ postalCode, deliveryRadiusKm }: DeliveryMapProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {loading ? (
+        {loadError && (
+          <div className="h-[400px] flex flex-col items-center justify-center bg-muted rounded-lg gap-2">
+            <AlertCircle className="w-8 h-8 text-destructive" />
+            <p className="text-muted-foreground">Erro ao carregar o mapa</p>
+            <p className="text-xs text-muted-foreground">Verifique a chave da API do Google Maps</p>
+          </div>
+        )}
+        
+        {!loadError && !isLoaded && (
           <div className="h-[400px] flex items-center justify-center bg-muted rounded-lg">
             <p className="text-muted-foreground">Carregando mapa...</p>
           </div>
-        ) : (
-          <LoadScript 
-            googleMapsApiKey={GOOGLE_MAPS_API_KEY}
-            onLoad={() => setIsLoaded(true)}
+        )}
+
+        {!loadError && isLoaded && !loading && (
+          <GoogleMap
+            mapContainerStyle={containerStyle}
+            center={center}
+            zoom={13}
+            options={{
+              disableDefaultUI: false,
+              zoomControl: true,
+              streetViewControl: false,
+              mapTypeControl: false,
+              fullscreenControl: true,
+            }}
           >
-            {isLoaded && (
-              <GoogleMap
-                mapContainerStyle={containerStyle}
-                center={center}
-                zoom={13}
-                options={{
-                  disableDefaultUI: false,
-                  zoomControl: true,
-                  streetViewControl: false,
-                  mapTypeControl: false,
-                  fullscreenControl: true,
-                }}
-              >
-                <Marker 
-                  position={center}
-                  icon={{
-                    path: 0, // CIRCLE symbol (google.maps.SymbolPath.CIRCLE = 0)
-                    scale: 10,
-                    fillColor: "#D32F2F",
-                    fillOpacity: 1,
-                    strokeColor: "#ffffff",
-                    strokeWeight: 2,
-                  }}
-                />
-                <Circle
-                  center={center}
-                  radius={deliveryRadiusKm * 1000}
-                  options={circleOptions}
-                />
-              </GoogleMap>
-            )}
-          </LoadScript>
+            <Marker 
+              position={center}
+              icon={{
+                path: 0, // CIRCLE symbol (google.maps.SymbolPath.CIRCLE = 0)
+                scale: 10,
+                fillColor: "#D32F2F",
+                fillOpacity: 1,
+                strokeColor: "#ffffff",
+                strokeWeight: 2,
+              }}
+            />
+            <Circle
+              center={center}
+              radius={deliveryRadiusKm * 1000}
+              options={circleOptions}
+            />
+          </GoogleMap>
+        )}
+
+        {!loadError && isLoaded && loading && (
+          <div className="h-[400px] flex items-center justify-center bg-muted rounded-lg">
+            <p className="text-muted-foreground">Atualizando localização...</p>
+          </div>
         )}
 
         {!loading && postalCode && (
