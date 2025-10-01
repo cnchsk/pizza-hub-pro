@@ -102,7 +102,7 @@ const DeliveryMap = ({ postalCode, deliveryRadiusKm }: DeliveryMapProps) => {
                 <Marker 
                   position={center}
                   icon={{
-                    path: google.maps.SymbolPath.CIRCLE,
+                    path: 0, // CIRCLE symbol (google.maps.SymbolPath.CIRCLE = 0)
                     scale: 10,
                     fillColor: "#D32F2F",
                     fillOpacity: 1,
