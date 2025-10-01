@@ -13,6 +13,10 @@ interface TenantData {
   name: string;
   cnpj: string;
   address: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
   phone: string | null;
   mobile_phone: string | null;
   subdomain: string;
@@ -99,6 +103,10 @@ const Settings = () => {
         name: tenantData.name,
         cnpj: tenantData.cnpj,
         address: tenantData.address,
+        neighborhood: tenantData.neighborhood,
+        city: tenantData.city,
+        state: tenantData.state,
+        postal_code: tenantData.postal_code,
         phone: tenantData.phone,
         mobile_phone: tenantData.mobile_phone,
         subdomain: tenantData.subdomain,
@@ -181,13 +189,58 @@ const Settings = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="address">Endereço Completo</Label>
+              <Label htmlFor="address">Endereço (Rua, número, complemento)</Label>
               <Input
                 id="address"
                 value={tenantData.address || ""}
                 onChange={(e) => setTenantData({ ...tenantData, address: e.target.value })}
-                placeholder="Rua, número, bairro, cidade - UF, CEP"
+                placeholder="Rua Exemplo, 123, Apto 45"
               />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="neighborhood">Bairro</Label>
+                <Input
+                  id="neighborhood"
+                  value={tenantData.neighborhood || ""}
+                  onChange={(e) => setTenantData({ ...tenantData, neighborhood: e.target.value })}
+                  placeholder="Centro"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="postal_code">CEP</Label>
+                <Input
+                  id="postal_code"
+                  value={tenantData.postal_code || ""}
+                  onChange={(e) => setTenantData({ ...tenantData, postal_code: e.target.value })}
+                  placeholder="12345-678"
+                />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="city">Cidade</Label>
+                <Input
+                  id="city"
+                  value={tenantData.city || ""}
+                  onChange={(e) => setTenantData({ ...tenantData, city: e.target.value })}
+                  placeholder="São Paulo"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="state">Estado (UF)</Label>
+                <Input
+                  id="state"
+                  value={tenantData.state || ""}
+                  onChange={(e) => setTenantData({ ...tenantData, state: e.target.value.toUpperCase() })}
+                  placeholder="SP"
+                  maxLength={2}
+                />
+              </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">

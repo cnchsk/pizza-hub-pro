@@ -586,6 +586,7 @@ export type Database = {
       tenants: {
         Row: {
           address: string | null
+          city: string | null
           cnpj: string
           created_at: string
           delivery_fee: number | null
@@ -595,14 +596,18 @@ export type Database = {
           logo_url: string | null
           mobile_phone: string | null
           name: string
+          neighborhood: string | null
           phone: string | null
+          postal_code: string | null
           primary_color: string | null
           secondary_color: string | null
+          state: string | null
           subdomain: string
           updated_at: string
         }
         Insert: {
           address?: string | null
+          city?: string | null
           cnpj: string
           created_at?: string
           delivery_fee?: number | null
@@ -612,14 +617,18 @@ export type Database = {
           logo_url?: string | null
           mobile_phone?: string | null
           name: string
+          neighborhood?: string | null
           phone?: string | null
+          postal_code?: string | null
           primary_color?: string | null
           secondary_color?: string | null
+          state?: string | null
           subdomain: string
           updated_at?: string
         }
         Update: {
           address?: string | null
+          city?: string | null
           cnpj?: string
           created_at?: string
           delivery_fee?: number | null
@@ -629,9 +638,12 @@ export type Database = {
           logo_url?: string | null
           mobile_phone?: string | null
           name?: string
+          neighborhood?: string | null
           phone?: string | null
+          postal_code?: string | null
           primary_color?: string | null
           secondary_color?: string | null
+          state?: string | null
           subdomain?: string
           updated_at?: string
         }
