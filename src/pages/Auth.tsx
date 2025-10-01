@@ -20,13 +20,14 @@ const Auth = () => {
   const redirectTo = searchParams.get("redirect");
 
   useEffect(() => {
-    // Check if user is already logged in
+    // Check if user is already logged in and redirect if coming from checkout
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+      if (session && redirectTo === "checkout") {
+        // User is already logged in, proceed to checkout
         handleRedirect();
       }
     });
-  }, []);
+  }, [redirectTo]);
 
   const handleRedirect = () => {
     if (redirectTo === "checkout") {
