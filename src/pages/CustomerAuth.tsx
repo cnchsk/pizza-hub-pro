@@ -7,31 +7,26 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Loader2, Mail, Phone } from "lucide-react";
+import { Loader2, Mail, Phone, ArrowLeft } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
-const Auth = () => {
+const CustomerAuth = () => {
   const [loading, setLoading] = useState(false);
   const [phoneAuthStep, setPhoneAuthStep] = useState<"phone" | "otp">("phone");
   const [phoneNumber, setPhoneNumber] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get("redirect");
+  const tenantId = searchParams.get("tenant");
 
   useEffect(() => {
-    // Check if user is already logged in and redirect if coming from checkout
+    // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session && redirectTo === "checkout") {
-        // User is already logged in, proceed to checkout
-        handleRedirect();
+      if (session) {
+        navigate("/cart");
       }
     });
-  }, [redirectTo]);
-
-  const handleRedirect = () => {
-    navigate("/dashboard");
-  };
+  }, []);
 
   const handleEmailLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -53,7 +48,7 @@ const Auth = () => {
         title: "Login realizado com sucesso!",
       });
 
-      handleRedirect();
+      navigate("/cart");
     } catch (error: any) {
       toast({
         title: "Erro ao fazer login",
@@ -73,27 +68,44 @@ const Auth = () => {
     const email = formData.get("signup-email") as string;
     const password = formData.get("signup-password") as string;
     const fullName = formData.get("fullname") as string;
+    const phone = formData.get("phone") as string;
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: fullName,
+            phone: phone,
           },
         },
       });
 
-      if (error) throw error;
+      if (signUpError) throw signUpError;
+
+      // Create profile with customer role
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert({
+            id: authData.user.id,
+            full_name: fullName,
+            phone: phone,
+            role: "customer",
+            tenant_id: tenantId || null,
+          });
+
+        if (profileError) throw profileError;
+      }
 
       toast({
         title: "Cadastro realizado!",
         description: "Você já pode fazer login com suas credenciais.",
       });
 
-      handleRedirect();
+      navigate("/cart");
     } catch (error: any) {
       toast({
         title: "Erro ao cadastrar",
@@ -110,7 +122,7 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}/cart`,
         },
       });
 
@@ -175,7 +187,7 @@ const Auth = () => {
         title: "Autenticação realizada!",
       });
 
-      handleRedirect();
+      navigate("/cart");
     } catch (error: any) {
       toast({
         title: "Erro ao verificar código",
@@ -190,14 +202,30 @@ const Auth = () => {
   return (
     <div className="min-h-screen gradient-warm">
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <h1 className="text-xl font-bold text-center">Autenticação</h1>
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/cart")}
+            className="transition-smooth"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
+          </Button>
+          <h1 className="text-xl font-bold">Identificação</h1>
+          <div className="w-24"></div>
         </div>
       </header>
       
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto">
           <Card className="p-6 shadow-medium">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold mb-2">Faça seu pedido</h2>
+              <p className="text-sm text-muted-foreground">
+                Entre ou cadastre-se para continuar
+              </p>
+            </div>
+
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-3 mb-6">
                 <TabsTrigger value="login">Entrar</TabsTrigger>
@@ -206,13 +234,6 @@ const Auth = () => {
               </TabsList>
               
               <TabsContent value="login" className="space-y-4">
-                <div className="text-center mb-4">
-                  <h2 className="text-xl font-bold">Entrar</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Entre com sua conta existente
-                  </p>
-                </div>
-
                 <form onSubmit={handleEmailLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">E-mail</Label>
@@ -249,7 +270,7 @@ const Auth = () => {
                     ) : (
                       <>
                         <Mail className="mr-2 h-4 w-4" />
-                        Entrar com E-mail
+                        Entrar
                       </>
                     )}
                   </Button>
@@ -305,13 +326,6 @@ const Auth = () => {
               </TabsContent>
 
               <TabsContent value="signup" className="space-y-4">
-                <div className="text-center mb-4">
-                  <h2 className="text-xl font-bold">Criar Conta</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Cadastre-se para fazer pedidos
-                  </p>
-                </div>
-
                 <form onSubmit={handleEmailSignup} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="fullname">Nome Completo</Label>
@@ -320,6 +334,17 @@ const Auth = () => {
                       name="fullname"
                       type="text"
                       placeholder="Seu nome"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Telefone</Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      placeholder="(11) 99999-9999"
                       required
                     />
                   </div>
@@ -413,13 +438,6 @@ const Auth = () => {
               </TabsContent>
 
               <TabsContent value="phone" className="space-y-4">
-                <div className="text-center mb-4">
-                  <h2 className="text-xl font-bold">Entrar com Celular</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Receba um código via SMS ou WhatsApp
-                  </p>
-                </div>
-
                 {phoneAuthStep === "phone" ? (
                   <form onSubmit={handlePhoneAuth} className="space-y-4">
                     <div className="space-y-2">
@@ -505,4 +523,4 @@ const Auth = () => {
   );
 };
 
-export default Auth;
+export default CustomerAuth;

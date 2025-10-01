@@ -186,7 +186,7 @@ const Cart = () => {
               </div>
 
               <Button 
-                onClick={() => navigate("/auth?redirect=checkout")}
+                onClick={() => navigate("/customer-auth")}
                 className="w-full gradient-primary text-primary-foreground shadow-medium hover:shadow-glow transition-smooth h-12 text-lg"
               >
                 Finalizar Pedido
