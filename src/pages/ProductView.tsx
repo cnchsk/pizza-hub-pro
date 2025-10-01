@@ -6,7 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ShoppingCart, Minus, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,7 +23,6 @@ const ProductView = () => {
   const [product, setProduct] = useState<any>(null);
   const [variations, setVariations] = useState<Variation[]>([]);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
-  const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [observations, setObservations] = useState("");
   const [loading, setLoading] = useState(true);
@@ -92,14 +91,6 @@ const ProductView = () => {
       }
     });
 
-    // Add selected extras
-    selectedExtras.forEach((extraId) => {
-      const extra = variations.find((v) => v.id === extraId);
-      if (extra) {
-        total += Number(extra.price_modifier);
-      }
-    });
-
     return total * quantity;
   };
 
@@ -108,14 +99,6 @@ const ProductView = () => {
       ...selectedVariations,
       [type]: variationId,
     });
-  };
-
-  const handleExtraToggle = (extraId: string) => {
-    if (selectedExtras.includes(extraId)) {
-      setSelectedExtras(selectedExtras.filter((id) => id !== extraId));
-    } else {
-      setSelectedExtras([...selectedExtras, extraId]);
-    }
   };
 
   const handleAddToCart = () => {
@@ -359,28 +342,28 @@ const ProductView = () => {
                 <Label className="text-base font-semibold mb-3 block">
                   Adicionais
                 </Label>
-                <div className="space-y-2">
-                  {extraVariations.map((variation) => (
-                    <div
-                      key={variation.id}
-                      className="flex items-center justify-between space-x-2 p-3 rounded-lg hover:bg-muted/50 transition-smooth"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={variation.id}
-                          checked={selectedExtras.includes(variation.id)}
-                          onCheckedChange={() => handleExtraToggle(variation.id)}
-                        />
-                        <Label htmlFor={variation.id} className="cursor-pointer">
-                          {variation.name}
-                        </Label>
-                      </div>
-                      <span className="text-sm font-semibold">
-                        + R$ {Number(variation.price_modifier).toFixed(2)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                <Select
+                  value={selectedVariations.extra}
+                  onValueChange={(value) => handleVariationSelect("extra", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um adicional" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {extraVariations.map((variation) => (
+                      <SelectItem key={variation.id} value={variation.id}>
+                        <div className="flex items-center justify-between w-full">
+                          <span>{variation.name}</span>
+                          <span className="ml-4 text-sm font-semibold">
+                            {Number(variation.price_modifier) > 0
+                              ? `+ R$ ${Number(variation.price_modifier).toFixed(2)}`
+                              : "Incluso"}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Card>
             )}
 
@@ -390,28 +373,28 @@ const ProductView = () => {
                 <Label className="text-base font-semibold mb-3 block">
                   Cobertura Extra
                 </Label>
-                <div className="space-y-2">
-                  {toppingVariations.map((variation) => (
-                    <div
-                      key={variation.id}
-                      className="flex items-center justify-between space-x-2 p-3 rounded-lg hover:bg-muted/50 transition-smooth"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={variation.id}
-                          checked={selectedExtras.includes(variation.id)}
-                          onCheckedChange={() => handleExtraToggle(variation.id)}
-                        />
-                        <Label htmlFor={variation.id} className="cursor-pointer">
-                          {variation.name}
-                        </Label>
-                      </div>
-                      <span className="text-sm font-semibold">
-                        + R$ {Number(variation.price_modifier).toFixed(2)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                <Select
+                  value={selectedVariations.topping}
+                  onValueChange={(value) => handleVariationSelect("topping", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma cobertura extra" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {toppingVariations.map((variation) => (
+                      <SelectItem key={variation.id} value={variation.id}>
+                        <div className="flex items-center justify-between w-full">
+                          <span>{variation.name}</span>
+                          <span className="ml-4 text-sm font-semibold">
+                            {Number(variation.price_modifier) > 0
+                              ? `+ R$ ${Number(variation.price_modifier).toFixed(2)}`
+                              : "Incluso"}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Card>
             )}
 
