@@ -592,6 +592,7 @@ export type Database = {
           delivery_fee: number | null
           delivery_radius_km: number | null
           free_delivery_min_order: number | null
+          google_maps_api_key: string | null
           id: string
           logo_url: string | null
           mobile_phone: string | null
@@ -613,6 +614,7 @@ export type Database = {
           delivery_fee?: number | null
           delivery_radius_km?: number | null
           free_delivery_min_order?: number | null
+          google_maps_api_key?: string | null
           id?: string
           logo_url?: string | null
           mobile_phone?: string | null
@@ -634,6 +636,7 @@ export type Database = {
           delivery_fee?: number | null
           delivery_radius_km?: number | null
           free_delivery_min_order?: number | null
+          google_maps_api_key?: string | null
           id?: string
           logo_url?: string | null
           mobile_phone?: string | null

@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { GoogleMap, LoadScript, Marker, Circle } from "@react-google-maps/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { MapPin } from "lucide-react";
 
 interface DeliveryMapProps {
   postalCode: string;
   deliveryRadiusKm: number;
+  apiKey: string;
 }
 
 const containerStyle = {
@@ -21,10 +20,9 @@ const defaultCenter = {
   lng: -46.633308
 };
 
-const DeliveryMap = ({ postalCode, deliveryRadiusKm }: DeliveryMapProps) => {
+const DeliveryMap = ({ postalCode, deliveryRadiusKm, apiKey }: DeliveryMapProps) => {
   const [center, setCenter] = useState(defaultCenter);
   const [loading, setLoading] = useState(false);
-  const [apiKey, setApiKey] = useState("");
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -73,30 +71,12 @@ const DeliveryMap = ({ postalCode, deliveryRadiusKm }: DeliveryMapProps) => {
             <MapPin className="w-5 h-5" />
             Mapa de Entrega
           </CardTitle>
-          <CardDescription>Configure sua chave da API do Google Maps</CardDescription>
+          <CardDescription>Configure sua chave da API do Google Maps nas configurações gerais</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="google-maps-key">Google Maps API Key</Label>
-            <Input
-              id="google-maps-key"
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Cole sua chave da API aqui"
-            />
-            <p className="text-sm text-muted-foreground">
-              Obtenha sua chave em:{" "}
-              <a 
-                href="https://console.cloud.google.com/google/maps-apis" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                Google Cloud Console
-              </a>
-            </p>
-          </div>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Para visualizar o mapa, adicione sua Google Maps API Key no campo acima.
+          </p>
         </CardContent>
       </Card>
     );

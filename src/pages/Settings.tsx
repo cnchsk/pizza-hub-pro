@@ -27,6 +27,7 @@ interface TenantData {
   delivery_fee: number;
   delivery_radius_km: number;
   free_delivery_min_order: number | null;
+  google_maps_api_key: string | null;
 }
 
 const Settings = () => {
@@ -117,6 +118,7 @@ const Settings = () => {
         delivery_fee: tenantData.delivery_fee,
         delivery_radius_km: tenantData.delivery_radius_km,
         free_delivery_min_order: tenantData.free_delivery_min_order,
+        google_maps_api_key: tenantData.google_maps_api_key,
       })
       .eq("id", tenantData.id);
 
@@ -289,6 +291,28 @@ const Settings = () => {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="google_maps_api_key">Google Maps API Key</Label>
+              <Input
+                id="google_maps_api_key"
+                type="password"
+                value={tenantData.google_maps_api_key || ""}
+                onChange={(e) => setTenantData({ ...tenantData, google_maps_api_key: e.target.value })}
+                placeholder="Cole sua chave da API do Google Maps"
+              />
+              <p className="text-sm text-muted-foreground">
+                Necessária para exibir o mapa de entrega.{" "}
+                <a 
+                  href="https://console.cloud.google.com/google/maps-apis" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  Obtenha sua chave aqui
+                </a>
+              </p>
+            </div>
+
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="primary_color">Cor Primária</Label>
@@ -399,6 +423,7 @@ const Settings = () => {
           <DeliveryMap
             postalCode={tenantData.postal_code || ""}
             deliveryRadiusKm={tenantData.delivery_radius_km}
+            apiKey={tenantData.google_maps_api_key || ""}
           />
         </div>
       </div>
