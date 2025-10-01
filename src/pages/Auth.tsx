@@ -9,6 +9,27 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, Mail, Phone } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { z } from "zod";
+
+// Validation schemas
+const emailSchema = z.string().trim().email("E-mail inválido").max(255, "E-mail muito longo");
+
+const passwordSchema = z.string()
+  .min(8, "Senha deve ter pelo menos 8 caracteres")
+  .regex(/[A-Z]/, "Senha deve conter pelo menos uma letra maiúscula")
+  .regex(/[a-z]/, "Senha deve conter pelo menos uma letra minúscula")
+  .regex(/[0-9]/, "Senha deve conter pelo menos um número")
+  .regex(/[^A-Za-z0-9]/, "Senha deve conter pelo menos um caractere especial");
+
+const phoneSchema = z.string()
+  .trim()
+  .regex(/^\+?[1-9]\d{1,14}$/, "Formato de telefone inválido. Use formato internacional: +5511999999999");
+
+const fullNameSchema = z.string()
+  .trim()
+  .min(3, "Nome deve ter pelo menos 3 caracteres")
+  .max(100, "Nome muito longo")
+  .regex(/^[a-zA-ZÀ-ÿ\s]+$/, "Nome deve conter apenas letras");
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
@@ -42,8 +63,14 @@ const Auth = () => {
     const password = formData.get("password") as string;
 
     try {
+      // Validate email
+      const emailValidation = emailSchema.safeParse(email);
+      if (!emailValidation.success) {
+        throw new Error(emailValidation.error.errors[0].message);
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: emailValidation.data,
         password,
       });
 
@@ -75,13 +102,29 @@ const Auth = () => {
     const fullName = formData.get("fullname") as string;
 
     try {
+      // Validate inputs
+      const emailValidation = emailSchema.safeParse(email);
+      if (!emailValidation.success) {
+        throw new Error(emailValidation.error.errors[0].message);
+      }
+
+      const passwordValidation = passwordSchema.safeParse(password);
+      if (!passwordValidation.success) {
+        throw new Error(passwordValidation.error.errors[0].message);
+      }
+
+      const fullNameValidation = fullNameSchema.safeParse(fullName);
+      if (!fullNameValidation.success) {
+        throw new Error(fullNameValidation.error.errors[0].message);
+      }
+
       const { error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: emailValidation.data,
+        password: passwordValidation.data,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
-            full_name: fullName,
+            full_name: fullNameValidation.data,
           },
         },
       });
@@ -132,13 +175,19 @@ const Auth = () => {
     const phone = formData.get("phone") as string;
 
     try {
+      // Validate phone
+      const phoneValidation = phoneSchema.safeParse(phone);
+      if (!phoneValidation.success) {
+        throw new Error(phoneValidation.error.errors[0].message);
+      }
+
       const { error } = await supabase.auth.signInWithOtp({
-        phone: phone,
+        phone: phoneValidation.data,
       });
 
       if (error) throw error;
 
-      setPhoneNumber(phone);
+      setPhoneNumber(phoneValidation.data);
       setPhoneAuthStep("otp");
       toast({
         title: "Código enviado!",
