@@ -30,28 +30,42 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CartItem[]>(() => {
+    const savedCart = localStorage.getItem("cart");
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
 
   const addItem = (item: Omit<CartItem, "id">) => {
     const newItem: CartItem = {
       ...item,
       id: crypto.randomUUID(),
     };
-    setItems((prev) => [...prev, newItem]);
+    setItems((prev) => {
+      const updated = [...prev, newItem];
+      localStorage.setItem("cart", JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const updateItem = (id: string, updates: Partial<CartItem>) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
-    );
+    setItems((prev) => {
+      const updated = prev.map((item) => (item.id === id ? { ...item, ...updates } : item));
+      localStorage.setItem("cart", JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const removeItem = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    setItems((prev) => {
+      const updated = prev.filter((item) => item.id !== id);
+      localStorage.setItem("cart", JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const clearCart = () => {
     setItems([]);
+    localStorage.removeItem("cart");
   };
 
   const getTotal = () => {
