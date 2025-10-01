@@ -6,8 +6,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ShoppingCart, Minus, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 
 interface Variation {
@@ -261,29 +261,28 @@ const ProductView = () => {
                 <Label className="text-base font-semibold mb-3 block">
                   Tamanho *
                 </Label>
-                <RadioGroup
+                <Select
                   value={selectedVariations.size}
                   onValueChange={(value) => handleVariationSelect("size", value)}
                 >
-                  {sizeVariations.map((variation) => (
-                    <div
-                      key={variation.id}
-                      className="flex items-center justify-between space-x-2 p-3 rounded-lg hover:bg-muted/50 transition-smooth"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value={variation.id} id={variation.id} />
-                        <Label htmlFor={variation.id} className="cursor-pointer">
-                          {variation.name}
-                        </Label>
-                      </div>
-                      <span className="text-sm font-semibold">
-                        {Number(variation.price_modifier) > 0
-                          ? `+ R$ ${Number(variation.price_modifier).toFixed(2)}`
-                          : "Incluso"}
-                      </span>
-                    </div>
-                  ))}
-                </RadioGroup>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tamanho" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sizeVariations.map((variation) => (
+                      <SelectItem key={variation.id} value={variation.id}>
+                        <div className="flex items-center justify-between w-full">
+                          <span>{variation.name}</span>
+                          <span className="ml-4 text-sm font-semibold">
+                            {Number(variation.price_modifier) > 0
+                              ? `+ R$ ${Number(variation.price_modifier).toFixed(2)}`
+                              : "Incluso"}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Card>
             )}
 
@@ -293,29 +292,28 @@ const ProductView = () => {
                 <Label className="text-base font-semibold mb-3 block">
                   Borda
                 </Label>
-                <RadioGroup
+                <Select
                   value={selectedVariations.border}
                   onValueChange={(value) => handleVariationSelect("border", value)}
                 >
-                  {borderVariations.map((variation) => (
-                    <div
-                      key={variation.id}
-                      className="flex items-center justify-between space-x-2 p-3 rounded-lg hover:bg-muted/50 transition-smooth"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value={variation.id} id={variation.id} />
-                        <Label htmlFor={variation.id} className="cursor-pointer">
-                          {variation.name}
-                        </Label>
-                      </div>
-                      <span className="text-sm font-semibold">
-                        {Number(variation.price_modifier) > 0
-                          ? `+ R$ ${Number(variation.price_modifier).toFixed(2)}`
-                          : "Incluso"}
-                      </span>
-                    </div>
-                  ))}
-                </RadioGroup>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a borda" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {borderVariations.map((variation) => (
+                      <SelectItem key={variation.id} value={variation.id}>
+                        <div className="flex items-center justify-between w-full">
+                          <span>{variation.name}</span>
+                          <span className="ml-4 text-sm font-semibold">
+                            {Number(variation.price_modifier) > 0
+                              ? `+ R$ ${Number(variation.price_modifier).toFixed(2)}`
+                              : "Incluso"}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Card>
             )}
 
