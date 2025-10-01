@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ShoppingCart, Minus, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,8 @@ interface Variation {
 
 const ProductView = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const editCartItemId = searchParams.get("editCartItem");
   const [product, setProduct] = useState<any>(null);
   const [variations, setVariations] = useState<Variation[]>([]);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
@@ -30,7 +32,7 @@ const ProductView = () => {
   const [current, setCurrent] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { addItem } = useCart();
+  const { addItem, updateItem, items } = useCart();
 
   useEffect(() => {
     loadProduct();
@@ -38,6 +40,25 @@ const ProductView = () => {
 
   useEffect(() => {
     if (variations.length > 0) {
+      // If editing an existing cart item, load its data
+      if (editCartItemId) {
+        const cartItem = items.find(item => item.id === editCartItemId);
+        if (cartItem) {
+          // Set quantity and observations
+          setQuantity(cartItem.quantity);
+          setObservations(cartItem.observations || "");
+          
+          // Set variations from cart item
+          const variationSelections: Record<string, string> = {};
+          cartItem.variations.forEach(variation => {
+            variationSelections[variation.type] = variation.id;
+          });
+          setSelectedVariations(variationSelections);
+          return;
+        }
+      }
+      
+      // Otherwise, initialize with first option of each type
       const initialSelections: Record<string, string> = {};
       const variationTypes = ['size', 'border', 'dough', 'extra', 'topping'];
       
@@ -52,7 +73,7 @@ const ProductView = () => {
         setSelectedVariations(prev => ({ ...prev, ...initialSelections }));
       }
     }
-  }, [variations]);
+  }, [variations, editCartItemId, items]);
 
   useEffect(() => {
     if (!api) return;
@@ -131,20 +152,35 @@ const ProductView = () => {
       } : null;
     }).filter(Boolean) as any[];
 
-    addItem({
-      productId: product.id,
-      name: product.name,
-      basePrice: Number(product.base_price),
-      quantity,
-      variations: selectedVariationsData,
-      observations: observations.trim() || undefined,
-      imageUrl: product.image_url || (Array.isArray(product.images) ? product.images[0] : undefined)
-    });
+    if (editCartItemId) {
+      // Update existing cart item
+      updateItem(editCartItemId, {
+        quantity,
+        variations: selectedVariationsData,
+        observations: observations.trim() || undefined,
+      });
 
-    toast({
-      title: "Produto adicionado!",
-      description: `${quantity}x ${product?.name} - R$ ${calculateTotal().toFixed(2)}`,
-    });
+      toast({
+        title: "Produto atualizado!",
+        description: `${quantity}x ${product?.name} - R$ ${calculateTotal().toFixed(2)}`,
+      });
+    } else {
+      // Add new item to cart
+      addItem({
+        productId: product.id,
+        name: product.name,
+        basePrice: Number(product.base_price),
+        quantity,
+        variations: selectedVariationsData,
+        observations: observations.trim() || undefined,
+        imageUrl: product.image_url || (Array.isArray(product.images) ? product.images[0] : undefined)
+      });
+
+      toast({
+        title: "Produto adicionado!",
+        description: `${quantity}x ${product?.name} - R$ ${calculateTotal().toFixed(2)}`,
+      });
+    }
 
     navigate("/cart");
   };
@@ -496,7 +532,7 @@ const ProductView = () => {
               className="w-full gradient-primary text-primary-foreground shadow-medium hover:shadow-glow transition-smooth h-12 text-lg"
             >
               <ShoppingCart className="w-5 h-5 mr-2" />
-              Adicionar ao Carrinho
+              {editCartItemId ? "Atualizar Carrinho" : "Adicionar ao Carrinho"}
             </Button>
           </div>
         </div>
