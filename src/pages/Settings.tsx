@@ -16,6 +16,9 @@ interface TenantData {
   logo_url: string | null;
   primary_color: string;
   secondary_color: string;
+  delivery_fee: number;
+  delivery_radius_km: number;
+  free_delivery_min_order: number | null;
 }
 
 const Settings = () => {
@@ -96,6 +99,9 @@ const Settings = () => {
         logo_url: tenantData.logo_url,
         primary_color: tenantData.primary_color,
         secondary_color: tenantData.secondary_color,
+        delivery_fee: tenantData.delivery_fee,
+        delivery_radius_km: tenantData.delivery_radius_km,
+        free_delivery_min_order: tenantData.free_delivery_min_order,
       })
       .eq("id", tenantData.id);
 
@@ -227,6 +233,65 @@ const Settings = () => {
                   />
                 </div>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Configurações de Entrega</CardTitle>
+            <CardDescription>Defina as regras de entrega da sua pizzaria</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="delivery_fee">Taxa de Entrega (R$)</Label>
+              <Input
+                id="delivery_fee"
+                type="number"
+                step="0.01"
+                min="0"
+                value={tenantData.delivery_fee}
+                onChange={(e) => setTenantData({ ...tenantData, delivery_fee: parseFloat(e.target.value) || 0 })}
+                placeholder="5.00"
+              />
+              <p className="text-sm text-muted-foreground">
+                Valor padrão cobrado pela entrega
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="delivery_radius_km">Raio de Entrega (km)</Label>
+              <Input
+                id="delivery_radius_km"
+                type="number"
+                step="0.1"
+                min="0"
+                value={tenantData.delivery_radius_km}
+                onChange={(e) => setTenantData({ ...tenantData, delivery_radius_km: parseFloat(e.target.value) || 0 })}
+                placeholder="5.0"
+              />
+              <p className="text-sm text-muted-foreground">
+                Distância máxima para entrega em quilômetros
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="free_delivery_min_order">Valor Mínimo para Entrega Grátis (R$)</Label>
+              <Input
+                id="free_delivery_min_order"
+                type="number"
+                step="0.01"
+                min="0"
+                value={tenantData.free_delivery_min_order || ""}
+                onChange={(e) => setTenantData({ 
+                  ...tenantData, 
+                  free_delivery_min_order: e.target.value ? parseFloat(e.target.value) : null 
+                })}
+                placeholder="50.00 (opcional)"
+              />
+              <p className="text-sm text-muted-foreground">
+                Deixe em branco se não houver entrega grátis
+              </p>
             </div>
 
             <div className="pt-4">

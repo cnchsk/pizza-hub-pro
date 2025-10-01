@@ -587,6 +587,9 @@ export type Database = {
         Row: {
           cnpj: string
           created_at: string
+          delivery_fee: number | null
+          delivery_radius_km: number | null
+          free_delivery_min_order: number | null
           id: string
           logo_url: string | null
           name: string
@@ -598,6 +601,9 @@ export type Database = {
         Insert: {
           cnpj: string
           created_at?: string
+          delivery_fee?: number | null
+          delivery_radius_km?: number | null
+          free_delivery_min_order?: number | null
           id?: string
           logo_url?: string | null
           name: string
@@ -609,6 +615,9 @@ export type Database = {
         Update: {
           cnpj?: string
           created_at?: string
+          delivery_fee?: number | null
+          delivery_radius_km?: number | null
+          free_delivery_min_order?: number | null
           id?: string
           logo_url?: string | null
           name?: string
