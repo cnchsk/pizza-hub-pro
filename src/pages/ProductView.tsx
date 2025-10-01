@@ -6,7 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ShoppingCart, Minus, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
-
+import { useCart } from "@/contexts/CartContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,6 +30,7 @@ const ProductView = () => {
   const [current, setCurrent] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { addItem } = useCart();
 
   useEffect(() => {
     loadProduct();
@@ -120,11 +121,32 @@ const ProductView = () => {
   };
 
   const handleAddToCart = () => {
-    const observationsText = observations.trim() ? `\nObservações: ${observations}` : "";
+    const selectedVariationsData = Object.entries(selectedVariations).map(([type, id]) => {
+      const variation = variations.find(v => v.id === id);
+      return variation ? {
+        id: variation.id,
+        type: variation.variation_type,
+        name: variation.name,
+        price_modifier: variation.price_modifier
+      } : null;
+    }).filter(Boolean) as any[];
+
+    addItem({
+      productId: product.id,
+      name: product.name,
+      basePrice: Number(product.base_price),
+      quantity,
+      variations: selectedVariationsData,
+      observations: observations.trim() || undefined,
+      imageUrl: product.image_url || (Array.isArray(product.images) ? product.images[0] : undefined)
+    });
+
     toast({
       title: "Produto adicionado!",
-      description: `${quantity}x ${product?.name} - R$ ${calculateTotal().toFixed(2)}${observationsText}`,
+      description: `${quantity}x ${product?.name} - R$ ${calculateTotal().toFixed(2)}`,
     });
+
+    navigate("/cart");
   };
 
   if (loading) {

@@ -1,47 +1,38 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  variations: string[];
-  observations?: string;
-}
+import { useCart } from "@/contexts/CartContext";
 
 const Cart = () => {
   const navigate = useNavigate();
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    // Mock data - will be replaced with actual cart state management
-  ]);
+  const { items, updateItem, removeItem, getTotal } = useCart();
 
   const updateQuantity = (id: string, delta: number) => {
-    setCartItems(items =>
-      items.map(item =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-          : item
-      )
-    );
+    const item = items.find(i => i.id === id);
+    if (item) {
+      updateItem(id, { quantity: Math.max(1, item.quantity + delta) });
+    }
   };
 
-  const removeItem = (id: string) => {
-    setCartItems(items => items.filter(item => item.id !== id));
+  const handleEdit = (id: string) => {
+    const item = items.find(i => i.id === id);
+    if (item) {
+      navigate(`/menu/product/${item.productId}?editCartItem=${id}`);
+    }
+  };
+
+  const calculateItemPrice = (item: typeof items[0]) => {
+    const variationsTotal = item.variations.reduce((sum, v) => sum + v.price_modifier, 0);
+    return (item.basePrice + variationsTotal) * item.quantity;
   };
 
   const calculateSubtotal = () => {
-    return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    return items.reduce((sum, item) => sum + calculateItemPrice(item), 0);
   };
 
-  const calculateTotal = () => {
-    const subtotal = calculateSubtotal();
-    const delivery = 5.00; // Taxa de entrega fixa
-    return subtotal + delivery;
-  };
+  const deliveryFee = 5.00;
+  const total = calculateSubtotal() + deliveryFee;
 
   return (
     <div className="min-h-screen gradient-warm">
@@ -61,7 +52,7 @@ const Cart = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-4xl">
-        {cartItems.length === 0 ? (
+        {items.length === 0 ? (
           <Card className="p-12 text-center">
             <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
             <h2 className="text-2xl font-bold mb-2">Seu carrinho está vazio</h2>
@@ -77,15 +68,25 @@ const Cart = () => {
             {/* Cart Items */}
             <div className="space-y-4">
               <h2 className="text-2xl font-bold">Itens do Pedido</h2>
-              {cartItems.map((item) => (
+              {items.map((item) => (
                 <Card key={item.id} className="p-4">
                   <div className="flex gap-4">
+                    {item.imageUrl && (
+                      <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                        <img 
+                          src={item.imageUrl} 
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    
                     <div className="flex-1">
                       <h3 className="font-bold text-lg mb-2">{item.name}</h3>
                       
                       {item.variations.length > 0 && (
                         <div className="text-sm text-muted-foreground mb-2">
-                          {item.variations.join(" • ")}
+                          {item.variations.map(v => v.name).join(" • ")}
                         </div>
                       )}
                       
@@ -119,19 +120,29 @@ const Cart = () => {
                         </div>
 
                         <span className="text-lg font-bold text-primary">
-                          R$ {(item.price * item.quantity).toFixed(2)}
+                          R$ {calculateItemPrice(item).toFixed(2)}
                         </span>
                       </div>
                     </div>
 
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeItem(item.id)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(item.id)}
+                        className="hover:bg-primary/10"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeItem(item.id)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               ))}
@@ -141,21 +152,21 @@ const Cart = () => {
             <Card className="p-6">
               <h3 className="text-xl font-bold mb-4">Resumo do Pedido</h3>
               
-              <div className="space-y-3 mb-4">
+                <div className="space-y-3 mb-4">
                 <div className="flex justify-between text-muted-foreground">
                   <span>Subtotal</span>
                   <span>R$ {calculateSubtotal().toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
                   <span>Taxa de entrega</span>
-                  <span>R$ 5.00</span>
+                  <span>R$ {deliveryFee.toFixed(2)}</span>
                 </div>
               </div>
 
               <div className="pt-4 border-t flex justify-between items-center mb-6">
                 <span className="text-xl font-bold">Total</span>
                 <span className="text-2xl font-bold text-primary">
-                  R$ {calculateTotal().toFixed(2)}
+                  R$ {total.toFixed(2)}
                 </span>
               </div>
 
