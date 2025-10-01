@@ -172,7 +172,13 @@ const ProductView = () => {
             Voltar
           </Button>
           <h1 className="text-xl font-bold">Visualização do Produto</h1>
-          <div className="w-24"></div>
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/cart")}
+            className="transition-smooth"
+          >
+            <ShoppingCart className="w-5 h-5" />
+          </Button>
         </div>
       </header>
 
