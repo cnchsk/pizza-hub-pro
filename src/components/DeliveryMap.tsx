@@ -26,6 +26,7 @@ const DeliveryMap = ({ postalCode, deliveryRadiusKm, onRadiusChange }: DeliveryM
   const [center, setCenter] = useState(defaultCenter);
   const [loading, setLoading] = useState(false);
   const [apiKey, setApiKey] = useState("");
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     // Geocode the postal code to get coordinates
@@ -135,36 +136,41 @@ const DeliveryMap = ({ postalCode, deliveryRadiusKm, onRadiusChange }: DeliveryM
             <p className="text-muted-foreground">Carregando mapa...</p>
           </div>
         ) : (
-          <LoadScript googleMapsApiKey={apiKey}>
-            <GoogleMap
-              mapContainerStyle={containerStyle}
-              center={center}
-              zoom={13}
-              options={{
-                disableDefaultUI: false,
-                zoomControl: true,
-                streetViewControl: false,
-                mapTypeControl: false,
-                fullscreenControl: true,
-              }}
-            >
-              <Marker 
-                position={center}
-                icon={{
-                  path: google.maps.SymbolPath.CIRCLE,
-                  scale: 10,
-                  fillColor: "#D32F2F",
-                  fillOpacity: 1,
-                  strokeColor: "#ffffff",
-                  strokeWeight: 2,
-                }}
-              />
-              <Circle
+          <LoadScript 
+            googleMapsApiKey={apiKey}
+            onLoad={() => setIsLoaded(true)}
+          >
+            {isLoaded && (
+              <GoogleMap
+                mapContainerStyle={containerStyle}
                 center={center}
-                radius={deliveryRadiusKm * 1000} // Convert km to meters
-                options={circleOptions}
-              />
-            </GoogleMap>
+                zoom={13}
+                options={{
+                  disableDefaultUI: false,
+                  zoomControl: true,
+                  streetViewControl: false,
+                  mapTypeControl: false,
+                  fullscreenControl: true,
+                }}
+              >
+                <Marker 
+                  position={center}
+                  icon={{
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 10,
+                    fillColor: "#D32F2F",
+                    fillOpacity: 1,
+                    strokeColor: "#ffffff",
+                    strokeWeight: 2,
+                  }}
+                />
+                <Circle
+                  center={center}
+                  radius={deliveryRadiusKm * 1000}
+                  options={circleOptions}
+                />
+              </GoogleMap>
+            )}
           </LoadScript>
         )}
 
