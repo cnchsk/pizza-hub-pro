@@ -8,6 +8,17 @@ const Cart = () => {
   const navigate = useNavigate();
   const { items, updateItem, removeItem, getTotal } = useCart();
 
+  const getVariationTypeLabel = (type: string): string => {
+    const labels: Record<string, string> = {
+      size: "Tamanho",
+      border: "Borda",
+      dough: "Tipo de Massa",
+      extra: "Adicional",
+      topping: "Cobertura Extra"
+    };
+    return labels[type] || type;
+  };
+
   const updateQuantity = (id: string, delta: number) => {
     const item = items.find(i => i.id === id);
     if (item) {
@@ -85,8 +96,12 @@ const Cart = () => {
                       <h3 className="font-bold text-lg mb-2">{item.name}</h3>
                       
                       {item.variations.length > 0 && (
-                        <div className="text-sm text-muted-foreground mb-2">
-                          {item.variations.map(v => v.name).join(" • ")}
+                        <div className="text-sm text-muted-foreground mb-2 space-y-1">
+                          {item.variations.map((v, index) => (
+                            <div key={index}>
+                              <span className="font-semibold">{getVariationTypeLabel(v.type)}:</span> {v.name}
+                            </div>
+                          ))}
                         </div>
                       )}
                       
