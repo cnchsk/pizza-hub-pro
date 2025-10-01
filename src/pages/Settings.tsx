@@ -12,6 +12,9 @@ interface TenantData {
   id: string;
   name: string;
   cnpj: string;
+  address: string | null;
+  phone: string | null;
+  mobile_phone: string | null;
   subdomain: string;
   logo_url: string | null;
   primary_color: string;
@@ -95,6 +98,9 @@ const Settings = () => {
       .update({
         name: tenantData.name,
         cnpj: tenantData.cnpj,
+        address: tenantData.address,
+        phone: tenantData.phone,
+        mobile_phone: tenantData.mobile_phone,
         subdomain: tenantData.subdomain,
         logo_url: tenantData.logo_url,
         primary_color: tenantData.primary_color,
@@ -172,6 +178,38 @@ const Settings = () => {
                 onChange={(e) => setTenantData({ ...tenantData, cnpj: e.target.value })}
                 placeholder="00.000.000/0000-00"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">Endereço Completo</Label>
+              <Input
+                id="address"
+                value={tenantData.address || ""}
+                onChange={(e) => setTenantData({ ...tenantData, address: e.target.value })}
+                placeholder="Rua, número, bairro, cidade - UF, CEP"
+              />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefone Fixo</Label>
+                <Input
+                  id="phone"
+                  value={tenantData.phone || ""}
+                  onChange={(e) => setTenantData({ ...tenantData, phone: e.target.value })}
+                  placeholder="(00) 0000-0000"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="mobile_phone">Celular/WhatsApp</Label>
+                <Input
+                  id="mobile_phone"
+                  value={tenantData.mobile_phone || ""}
+                  onChange={(e) => setTenantData({ ...tenantData, mobile_phone: e.target.value })}
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
