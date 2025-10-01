@@ -19,14 +19,7 @@ const CustomerAuth = () => {
   const [searchParams] = useSearchParams();
   const tenantId = searchParams.get("tenant");
 
-  useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate("/cart");
-      }
-    });
-  }, []);
+  // Remove auto-redirect - allow user to see auth page even if logged in
 
   const handleEmailLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
