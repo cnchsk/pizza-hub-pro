@@ -145,7 +145,9 @@ const ProductView = () => {
 
   const sizeVariations = getVariationsByType("size");
   const borderVariations = getVariationsByType("border");
+  const doughVariations = getVariationsByType("dough");
   const extraVariations = getVariationsByType("extra");
+  const toppingVariations = getVariationsByType("topping");
 
   const images = Array.isArray(product.images) && product.images.length > 0 
     ? product.images as string[] 
@@ -317,14 +319,76 @@ const ProductView = () => {
               </Card>
             )}
 
+            {/* Dough Type Variations */}
+            {doughVariations.length > 0 && (
+              <Card className="p-4">
+                <Label className="text-base font-semibold mb-3 block">
+                  Tipo Massa
+                </Label>
+                <Select
+                  value={selectedVariations.dough}
+                  onValueChange={(value) => handleVariationSelect("dough", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo de massa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {doughVariations.map((variation) => (
+                      <SelectItem key={variation.id} value={variation.id}>
+                        <div className="flex items-center justify-between w-full">
+                          <span>{variation.name}</span>
+                          <span className="ml-4 text-sm font-semibold">
+                            {Number(variation.price_modifier) > 0
+                              ? `+ R$ ${Number(variation.price_modifier).toFixed(2)}`
+                              : "Incluso"}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Card>
+            )}
+
             {/* Extra Variations */}
             {extraVariations.length > 0 && (
               <Card className="p-4">
                 <Label className="text-base font-semibold mb-3 block">
-                  Extras
+                  Adicionais
                 </Label>
                 <div className="space-y-2">
                   {extraVariations.map((variation) => (
+                    <div
+                      key={variation.id}
+                      className="flex items-center justify-between space-x-2 p-3 rounded-lg hover:bg-muted/50 transition-smooth"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={variation.id}
+                          checked={selectedExtras.includes(variation.id)}
+                          onCheckedChange={() => handleExtraToggle(variation.id)}
+                        />
+                        <Label htmlFor={variation.id} className="cursor-pointer">
+                          {variation.name}
+                        </Label>
+                      </div>
+                      <span className="text-sm font-semibold">
+                        + R$ {Number(variation.price_modifier).toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {/* Topping Extra Variations */}
+            {toppingVariations.length > 0 && (
+              <Card className="p-4">
+                <Label className="text-base font-semibold mb-3 block">
+                  Cobertura Extra
+                </Label>
+                <div className="space-y-2">
+                  {toppingVariations.map((variation) => (
                     <div
                       key={variation.id}
                       className="flex items-center justify-between space-x-2 p-3 rounded-lg hover:bg-muted/50 transition-smooth"

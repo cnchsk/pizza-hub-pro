@@ -483,7 +483,9 @@ const EditProduct = () => {
                         <SelectContent>
                           <SelectItem value="size">Tamanho</SelectItem>
                           <SelectItem value="border">Borda</SelectItem>
-                          <SelectItem value="extra">Extra</SelectItem>
+                          <SelectItem value="dough">Tipo Massa</SelectItem>
+                          <SelectItem value="extra">Adicionais</SelectItem>
+                          <SelectItem value="topping">Cobertura Extra</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
