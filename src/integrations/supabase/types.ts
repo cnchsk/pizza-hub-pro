@@ -470,47 +470,29 @@ export type Database = {
       }
       profiles: {
         Row: {
-          address: string | null
-          address_complement: string | null
-          city: string | null
           created_at: string
           full_name: string | null
           id: string
-          neighborhood: string | null
           phone: string | null
-          postal_code: string | null
           role: string | null
-          state: string | null
           tenant_id: string | null
           updated_at: string
         }
         Insert: {
-          address?: string | null
-          address_complement?: string | null
-          city?: string | null
           created_at?: string
           full_name?: string | null
           id: string
-          neighborhood?: string | null
           phone?: string | null
-          postal_code?: string | null
           role?: string | null
-          state?: string | null
           tenant_id?: string | null
           updated_at?: string
         }
         Update: {
-          address?: string | null
-          address_complement?: string | null
-          city?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
-          neighborhood?: string | null
           phone?: string | null
-          postal_code?: string | null
           role?: string | null
-          state?: string | null
           tenant_id?: string | null
           updated_at?: string
         }

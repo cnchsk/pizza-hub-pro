@@ -33,15 +33,15 @@ const CompleteProfile = () => {
         return;
       }
 
-      // Verifica se o perfil já está completo
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("address, city")
+      // Verifica se o cliente já está cadastrado com endereço
+      const { data: customer } = await supabase
+        .from("customers")
+        .select("address")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (profile?.address && profile?.city) {
-        // Perfil já completo, redireciona para o carrinho
+      if (customer?.address) {
+        // Cliente já cadastrado, redireciona para o carrinho
         navigate("/cart");
         return;
       }
@@ -85,43 +85,27 @@ const CompleteProfile = () => {
 
       if (profileError) throw profileError;
 
+      if (!profile?.tenant_id) {
+        throw new Error("Tenant não encontrado. Entre em contato com o suporte.");
+      }
+
       const fullAddress = `${validatedData.address}, ${validatedData.neighborhood}, ${validatedData.city} - ${validatedData.state}, ${validatedData.postal_code}${validatedData.address_complement ? ` - ${validatedData.address_complement}` : ''}`;
 
-      // Atualiza o perfil com o endereço
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          address: validatedData.address,
-          neighborhood: validatedData.neighborhood,
-          city: validatedData.city,
-          state: validatedData.state,
-          postal_code: validatedData.postal_code,
-          address_complement: validatedData.address_complement || null,
-        })
-        .eq("id", user.id);
+      // Cadastra ou atualiza apenas na tabela customers
+      const { error: customerError } = await supabase
+        .from("customers")
+        .upsert({
+          id: user.id,
+          tenant_id: profile.tenant_id,
+          full_name: profile.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Cliente',
+          phone: profile.phone || user.user_metadata?.phone || '',
+          email: user.email || '',
+          address: fullAddress,
+        }, {
+          onConflict: 'id'
+        });
 
-      if (error) throw error;
-
-      // Cadastra ou atualiza na tabela customers
-      if (profile?.tenant_id) {
-        const { error: customerError } = await supabase
-          .from("customers")
-          .upsert({
-            id: user.id,
-            tenant_id: profile.tenant_id,
-            full_name: profile.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Cliente',
-            phone: profile.phone || user.user_metadata?.phone || '',
-            email: user.email || '',
-            address: fullAddress,
-          }, {
-            onConflict: 'id'
-          });
-
-        if (customerError) {
-          console.error("Erro ao cadastrar cliente:", customerError);
-          // Não bloqueia o fluxo se houver erro no customers
-        }
-      }
+      if (customerError) throw customerError;
 
       toast({
         title: "Endereço cadastrado!",
