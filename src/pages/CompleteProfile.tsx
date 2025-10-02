@@ -81,7 +81,7 @@ const CompleteProfile = () => {
         .from("profiles")
         .select("tenant_id, full_name, phone")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
 
