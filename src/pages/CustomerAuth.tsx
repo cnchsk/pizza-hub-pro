@@ -163,7 +163,7 @@ const CustomerAuth = () => {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/cart`,
+          redirectTo: `${window.location.origin}/complete-profile`,
           skipBrowserRedirect: true,
           queryParams: {
             access_type: 'offline',

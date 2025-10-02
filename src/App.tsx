@@ -17,6 +17,7 @@ import Settings from "./pages/Settings";
 import Customers from "./pages/Customers";
 import Cart from "./pages/Cart";
 import CustomerAuth from "./pages/CustomerAuth";
+import CompleteProfile from "./pages/CompleteProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/menu/product/:id" element={<ProductView />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/customer-auth" element={<CustomerAuth />} />
+          <Route path="/complete-profile" element={<CompleteProfile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/customers" element={<Customers />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
