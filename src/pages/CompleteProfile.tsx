@@ -76,6 +76,17 @@ const CompleteProfile = () => {
         throw new Error("Usuário não autenticado");
       }
 
+      // Busca o perfil atual para obter tenant_id, nome e telefone
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("tenant_id, full_name, phone")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      const fullAddress = `${validatedData.address}, ${validatedData.neighborhood}, ${validatedData.city} - ${validatedData.state}, ${validatedData.postal_code}${validatedData.address_complement ? ` - ${validatedData.address_complement}` : ''}`;
+
       // Atualiza o perfil com o endereço
       const { error } = await supabase
         .from("profiles")
@@ -90,6 +101,27 @@ const CompleteProfile = () => {
         .eq("id", user.id);
 
       if (error) throw error;
+
+      // Cadastra ou atualiza na tabela customers
+      if (profile?.tenant_id) {
+        const { error: customerError } = await supabase
+          .from("customers")
+          .upsert({
+            id: user.id,
+            tenant_id: profile.tenant_id,
+            full_name: profile.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Cliente',
+            phone: profile.phone || user.user_metadata?.phone || '',
+            email: user.email || '',
+            address: fullAddress,
+          }, {
+            onConflict: 'id'
+          });
+
+        if (customerError) {
+          console.error("Erro ao cadastrar cliente:", customerError);
+          // Não bloqueia o fluxo se houver erro no customers
+        }
+      }
 
       toast({
         title: "Endereço cadastrado!",
