@@ -154,6 +154,7 @@ const Auth = () => {
         provider,
         options: {
           redirectTo: `${window.location.origin}/`,
+          skipBrowserRedirect: true,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -163,7 +164,7 @@ const Auth = () => {
 
       if (error) throw error;
 
-      // Redireciona para a URL do OAuth
+      // Redireciona manualmente para evitar erro de iframe
       if (data?.url) {
         window.location.href = data.url;
       }

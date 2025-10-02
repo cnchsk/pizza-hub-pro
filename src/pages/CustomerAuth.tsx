@@ -164,6 +164,7 @@ const CustomerAuth = () => {
         provider,
         options: {
           redirectTo: `${window.location.origin}/cart`,
+          skipBrowserRedirect: true,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -173,7 +174,7 @@ const CustomerAuth = () => {
 
       if (error) throw error;
 
-      // Redireciona para a URL do OAuth
+      // Redireciona manualmente para evitar erro de iframe
       if (data?.url) {
         window.location.href = data.url;
       }
