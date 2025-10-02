@@ -10,6 +10,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, Mail, Phone, ArrowLeft } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { z } from "zod";
+import { useTenant } from "@/contexts/TenantContext";
 
 // Validation schemas
 const emailSchema = z.string().trim().email("E-mail inválido").max(255, "E-mail muito longo");
@@ -35,35 +36,10 @@ const CustomerAuth = () => {
   const [loading, setLoading] = useState(false);
   const [phoneAuthStep, setPhoneAuthStep] = useState<"phone" | "otp">("phone");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [tenantId, setTenantId] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-
-  // Busca o tenant_id da URL ou do primeiro tenant disponível
-  useEffect(() => {
-    const fetchTenantId = async () => {
-      const tenantFromUrl = searchParams.get("tenant");
-      
-      if (tenantFromUrl) {
-        setTenantId(tenantFromUrl);
-        return;
-      }
-
-      // Busca o primeiro tenant disponível
-      const { data: tenantData } = await supabase
-        .from("tenants")
-        .select("id")
-        .limit(1)
-        .maybeSingle();
-
-      if (tenantData) {
-        setTenantId(tenantData.id);
-      }
-    };
-
-    fetchTenantId();
-  }, [searchParams]);
+  const { tenantId } = useTenant();
 
   // Remove auto-redirect - allow user to see auth page even if logged in
 

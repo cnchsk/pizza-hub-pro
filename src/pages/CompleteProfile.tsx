@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, MapPin } from "lucide-react";
 import { z } from "zod";
+import { useTenant } from "@/contexts/TenantContext";
 
 const addressSchema = z.object({
   address: z.string().trim().min(5, "Endereço deve ter pelo menos 5 caracteres").max(200, "Endereço muito longo"),
@@ -23,6 +24,7 @@ const CompleteProfile = () => {
   const [checkingProfile, setCheckingProfile] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { tenantId } = useTenant();
 
   useEffect(() => {
     const checkUserProfile = async () => {
@@ -76,40 +78,18 @@ const CompleteProfile = () => {
         throw new Error("Usuário não autenticado");
       }
 
-      // Busca o perfil atual para obter tenant_id, nome e telefone
+      // Busca o perfil atual para obter nome e telefone
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("tenant_id, full_name, phone")
+        .select("full_name, phone")
         .eq("id", user.id)
         .maybeSingle();
 
       if (profileError) throw profileError;
 
-      let tenantId = profile?.tenant_id;
-
-      // Se não tiver tenant_id no profile, busca o primeiro tenant disponível
+      // Usa o tenantId do contexto
       if (!tenantId) {
-        const { data: tenantData, error: tenantError } = await supabase
-          .from("tenants")
-          .select("id")
-          .limit(1)
-          .maybeSingle();
-
-        if (tenantError) throw tenantError;
-        
-        if (!tenantData) {
-          throw new Error("Nenhuma loja encontrada. Entre em contato com o suporte.");
-        }
-
-        tenantId = tenantData.id;
-
-        // Atualiza o profile com o tenant_id
-        if (profile) {
-          await supabase
-            .from("profiles")
-            .update({ tenant_id: tenantId })
-            .eq("id", user.id);
-        }
+        throw new Error("Nenhuma loja encontrada. Por favor, acesse o cardápio da loja primeiro.");
       }
 
       const fullAddress = `${validatedData.address}, ${validatedData.neighborhood}, ${validatedData.city} - ${validatedData.state}, ${validatedData.postal_code}${validatedData.address_complement ? ` - ${validatedData.address_complement}` : ''}`;

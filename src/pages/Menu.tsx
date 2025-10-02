@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, ArrowLeft, Package, Trash2, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTenant } from "@/contexts/TenantContext";
 import {
   Dialog,
   DialogContent,
@@ -41,6 +42,7 @@ const Menu = () => {
   const [itemToDelete, setItemToDelete] = useState<{ type: "category" | "product"; id: string; name: string } | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setTenantId } = useTenant();
 
   useEffect(() => {
     loadData();
@@ -62,6 +64,9 @@ const Menu = () => {
         .single();
 
       if (!profileData?.tenant_id) return;
+
+      // Define o tenant no contexto para uso em outras páginas
+      setTenantId(profileData.tenant_id);
 
       const { data: categoriesData } = await supabase
         .from("categories")

@@ -7,6 +7,7 @@ import { ArrowLeft, ShoppingCart, Minus, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { useCart } from "@/contexts/CartContext";
+import { useTenant } from "@/contexts/TenantContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,6 +34,7 @@ const ProductView = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { addItem, updateItem, items } = useCart();
+  const { setTenantId } = useTenant();
 
   useEffect(() => {
     loadProduct();
@@ -96,6 +98,11 @@ const ProductView = () => {
       if (productError) throw productError;
 
       setProduct(productData);
+
+      // Define o tenant no contexto
+      if (productData.tenant_id) {
+        setTenantId(productData.tenant_id);
+      }
 
       const { data: variationsData } = await supabase
         .from("product_variations")
