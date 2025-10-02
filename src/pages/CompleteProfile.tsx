@@ -85,8 +85,31 @@ const CompleteProfile = () => {
 
       if (profileError) throw profileError;
 
-      if (!profile?.tenant_id) {
-        throw new Error("Tenant não encontrado. Entre em contato com o suporte.");
+      let tenantId = profile?.tenant_id;
+
+      // Se não tiver tenant_id no profile, busca o primeiro tenant disponível
+      if (!tenantId) {
+        const { data: tenantData, error: tenantError } = await supabase
+          .from("tenants")
+          .select("id")
+          .limit(1)
+          .maybeSingle();
+
+        if (tenantError) throw tenantError;
+        
+        if (!tenantData) {
+          throw new Error("Nenhuma loja encontrada. Entre em contato com o suporte.");
+        }
+
+        tenantId = tenantData.id;
+
+        // Atualiza o profile com o tenant_id
+        if (profile) {
+          await supabase
+            .from("profiles")
+            .update({ tenant_id: tenantId })
+            .eq("id", user.id);
+        }
       }
 
       const fullAddress = `${validatedData.address}, ${validatedData.neighborhood}, ${validatedData.city} - ${validatedData.state}, ${validatedData.postal_code}${validatedData.address_complement ? ` - ${validatedData.address_complement}` : ''}`;
@@ -96,9 +119,9 @@ const CompleteProfile = () => {
         .from("customers")
         .upsert({
           id: user.id,
-          tenant_id: profile.tenant_id,
-          full_name: profile.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Cliente',
-          phone: profile.phone || user.user_metadata?.phone || '',
+          tenant_id: tenantId,
+          full_name: profile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Cliente',
+          phone: profile?.phone || user.user_metadata?.phone || '',
           email: user.email || '',
           address: fullAddress,
         }, {

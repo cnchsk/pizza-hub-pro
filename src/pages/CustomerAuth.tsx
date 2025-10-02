@@ -35,10 +35,35 @@ const CustomerAuth = () => {
   const [loading, setLoading] = useState(false);
   const [phoneAuthStep, setPhoneAuthStep] = useState<"phone" | "otp">("phone");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [tenantId, setTenantId] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const tenantId = searchParams.get("tenant");
+
+  // Busca o tenant_id da URL ou do primeiro tenant disponível
+  useEffect(() => {
+    const fetchTenantId = async () => {
+      const tenantFromUrl = searchParams.get("tenant");
+      
+      if (tenantFromUrl) {
+        setTenantId(tenantFromUrl);
+        return;
+      }
+
+      // Busca o primeiro tenant disponível
+      const { data: tenantData } = await supabase
+        .from("tenants")
+        .select("id")
+        .limit(1)
+        .maybeSingle();
+
+      if (tenantData) {
+        setTenantId(tenantData.id);
+      }
+    };
+
+    fetchTenantId();
+  }, [searchParams]);
 
   // Remove auto-redirect - allow user to see auth page even if logged in
 
