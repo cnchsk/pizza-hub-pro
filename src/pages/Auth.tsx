@@ -150,9 +150,6 @@ const Auth = () => {
 
   const handleSocialLogin = async (provider: "google" | "facebook") => {
     try {
-      console.log('Iniciando login com', provider);
-      console.log('Redirect URL:', `${window.location.origin}/`);
-      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
@@ -164,14 +161,13 @@ const Auth = () => {
         },
       });
 
-      console.log('Resposta OAuth:', { data, error });
+      if (error) throw error;
 
-      if (error) {
-        console.error('Erro OAuth:', error);
-        throw error;
+      // Redireciona para a URL do OAuth
+      if (data?.url) {
+        window.location.href = data.url;
       }
     } catch (error: any) {
-      console.error('Erro capturado:', error);
       toast({
         title: "Erro no login social",
         description: error.message || "Verifique a configuração do OAuth no backend",
