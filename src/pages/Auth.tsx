@@ -150,6 +150,8 @@ const Auth = () => {
 
   const handleSocialLogin = async (provider: "google" | "facebook") => {
     try {
+      console.log('[LOGIN] Iniciando com skipBrowserRedirect');
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
@@ -162,13 +164,19 @@ const Auth = () => {
         },
       });
 
+      console.log('[LOGIN] Resposta:', { hasUrl: !!data?.url, error });
+
       if (error) throw error;
 
       // Redireciona manualmente para evitar erro de iframe
       if (data?.url) {
+        console.log('[LOGIN] Redirecionando para:', data.url);
         window.location.href = data.url;
+      } else {
+        console.error('[LOGIN] URL não retornada:', data);
       }
     } catch (error: any) {
+      console.error('[LOGIN] Erro capturado:', error);
       toast({
         title: "Erro no login social",
         description: error.message || "Verifique a configuração do OAuth no backend",
