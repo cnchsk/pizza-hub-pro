@@ -160,18 +160,31 @@ const CustomerAuth = () => {
 
   const handleSocialLogin = async (provider: "google" | "facebook") => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log('Iniciando login com', provider);
+      console.log('Redirect URL:', `${window.location.origin}/cart`);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/cart`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
 
-      if (error) throw error;
+      console.log('Resposta OAuth:', { data, error });
+
+      if (error) {
+        console.error('Erro OAuth:', error);
+        throw error;
+      }
     } catch (error: any) {
+      console.error('Erro capturado:', error);
       toast({
         title: "Erro no login social",
-        description: error.message,
+        description: error.message || "Verifique a configuração do OAuth no backend",
         variant: "destructive",
       });
     }
