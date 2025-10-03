@@ -440,6 +440,7 @@ const Settings = () => {
                       <SelectValue placeholder="Selecione um provedor" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="cash_on_delivery">Pago na Entrega com Cartão</SelectItem>
                       <SelectItem value="mercadopago">Mercado Pago</SelectItem>
                       <SelectItem value="pagseguro">PagSeguro</SelectItem>
                       <SelectItem value="stripe">Stripe</SelectItem>
@@ -454,7 +455,7 @@ const Settings = () => {
                   </p>
                 </div>
 
-                {tenantData.payment_provider && (
+                {tenantData.payment_provider && tenantData.payment_provider !== "cash_on_delivery" && (
                   <>
                     <div className="space-y-2">
                       <Label htmlFor="payment_api_key">API Key / Access Token</Label>
