@@ -7,10 +7,19 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Loader2, Mail, Phone, ArrowLeft } from "lucide-react";
+import { Loader2, Mail, Phone, ArrowLeft, MapPin, User } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { z } from "zod";
 import { useTenant } from "@/contexts/TenantContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useCart } from "@/contexts/CartContext";
 
 // Validation schemas
 const emailSchema = z.string().trim().email("E-mail inválido").max(255, "E-mail muito longo");
@@ -40,8 +49,93 @@ const CustomerAuth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { tenantId } = useTenant();
+  const { getTotal } = useCart();
+  
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [customerData, setCustomerData] = useState<{
+    full_name: string;
+    phone: string;
+    address?: string;
+    email?: string;
+  } | null>(null);
+  const [paymentProvider, setPaymentProvider] = useState<string>("");
+  const [processingOrder, setProcessingOrder] = useState(false);
 
   // Remove auto-redirect - allow user to see auth page even if logged in
+
+  const handleSuccessfulAuth = async () => {
+    try {
+      // Buscar dados do usuário
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Buscar profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, phone")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      // Buscar customer se existir
+      const { data: customer } = await supabase
+        .from("customers")
+        .select("address, email")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      // Buscar payment provider do tenant
+      const { data: tenant } = await supabase
+        .from("tenants")
+        .select("payment_provider")
+        .eq("id", tenantId)
+        .maybeSingle();
+
+      setCustomerData({
+        full_name: profile?.full_name || "",
+        phone: profile?.phone || "",
+        address: customer?.address || "",
+        email: customer?.email || user.email || "",
+      });
+      
+      setPaymentProvider(tenant?.payment_provider || "");
+      setShowConfirmDialog(true);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao buscar dados",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleConfirmOrder = async () => {
+    setProcessingOrder(true);
+    try {
+      // Se for pagamento na entrega, redireciona para página de confirmação
+      if (paymentProvider === "cash_on_delivery") {
+        navigate("/cart");
+        setShowConfirmDialog(false);
+      } else {
+        // Para outros provedores, redirecionar para página de pagamento
+        // TODO: Implementar integração com provedores de pagamento
+        toast({
+          title: "Redirecionando para pagamento",
+          description: `Processando pagamento via ${paymentProvider}`,
+        });
+        // Por enquanto, apenas redireciona para o cart
+        navigate("/cart");
+        setShowConfirmDialog(false);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro ao processar pedido",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingOrder(false);
+    }
+  };
 
   const handleEmailLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -69,7 +163,7 @@ const CustomerAuth = () => {
         title: "Login realizado com sucesso!",
       });
 
-      navigate("/cart");
+      await handleSuccessfulAuth();
     } catch (error: any) {
       toast({
         title: "Erro ao fazer login",
@@ -147,7 +241,7 @@ const CustomerAuth = () => {
         description: "Você já pode fazer login com suas credenciais.",
       });
 
-      navigate("/cart");
+      await handleSuccessfulAuth();
     } catch (error: any) {
       toast({
         title: "Erro ao cadastrar",
@@ -246,7 +340,7 @@ const CustomerAuth = () => {
         title: "Autenticação realizada!",
       });
 
-      navigate("/cart");
+      await handleSuccessfulAuth();
     } catch (error: any) {
       toast({
         title: "Erro ao verificar código",
@@ -578,6 +672,103 @@ const CustomerAuth = () => {
           </Card>
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Confirme seus dados</DialogTitle>
+            <DialogDescription>
+              Verifique se suas informações estão corretas antes de continuar
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <Card className="p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <User className="w-5 h-5 text-primary mt-0.5" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Nome</p>
+                  <p className="font-semibold">{customerData?.full_name}</p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="flex items-start gap-3">
+                <Phone className="w-5 h-5 text-primary mt-0.5" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Telefone</p>
+                  <p className="font-semibold">{customerData?.phone}</p>
+                </div>
+              </div>
+
+              {customerData?.email && (
+                <>
+                  <Separator />
+                  <div className="flex items-start gap-3">
+                    <Mail className="w-5 h-5 text-primary mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">E-mail</p>
+                      <p className="font-semibold">{customerData.email}</p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {customerData?.address && (
+                <>
+                  <Separator />
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-5 h-5 text-primary mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Endereço de Entrega</p>
+                      <p className="font-semibold">{customerData.address}</p>
+                    </div>
+                  </div>
+                </>
+              )}
+            </Card>
+
+            <Card className="p-4 bg-primary/5">
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">Total do Pedido</span>
+                <span className="text-xl font-bold text-primary">
+                  R$ {getTotal().toFixed(2)}
+                </span>
+              </div>
+            </Card>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmDialog(false)}
+              disabled={processingOrder}
+            >
+              Voltar
+            </Button>
+            <Button
+              onClick={handleConfirmOrder}
+              disabled={processingOrder}
+              className="gradient-primary"
+            >
+              {processingOrder ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                <>
+                  {paymentProvider === "cash_on_delivery" 
+                    ? "Finalizar Pedido" 
+                    : "Ir para Pagamento"}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
