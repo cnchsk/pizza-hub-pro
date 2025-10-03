@@ -10,12 +10,24 @@ const Dashboard = () => {
   const [profile, setProfile] = useState<any>(null);
   const [tenant, setTenant] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    ordersToday: 0,
+    products: 0,
+    npsAverage: "-",
+    customers: 0,
+  });
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (tenant?.id) {
+      loadStats();
+    }
+  }, [tenant]);
 
   const checkAuth = async () => {
     try {
@@ -43,6 +55,56 @@ const Dashboard = () => {
     }
   };
 
+  const loadStats = async () => {
+    if (!tenant?.id) return;
+
+    try {
+      // Pedidos de hoje
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const { count: ordersCount } = await supabase
+        .from("orders")
+        .select("*", { count: "exact", head: true })
+        .eq("tenant_id", tenant.id)
+        .gte("created_at", today.toISOString());
+
+      // Total de produtos
+      const { count: productsCount } = await supabase
+        .from("products")
+        .select("*", { count: "exact", head: true })
+        .eq("tenant_id", tenant.id)
+        .eq("is_active", true);
+
+      // NPS Médio
+      const { data: surveyData } = await supabase
+        .from("survey_responses")
+        .select("nps_score, surveys!inner(tenant_id)")
+        .eq("surveys.tenant_id", tenant.id)
+        .not("nps_score", "is", null);
+
+      let npsAverage: string | number = "-";
+      if (surveyData && surveyData.length > 0) {
+        const sum = surveyData.reduce((acc, curr) => acc + (curr.nps_score || 0), 0);
+        npsAverage = (sum / surveyData.length).toFixed(1);
+      }
+
+      // Total de clientes
+      const { count: customersCount } = await supabase
+        .from("customers")
+        .select("*", { count: "exact", head: true })
+        .eq("tenant_id", tenant.id);
+
+      setStats({
+        ordersToday: ordersCount || 0,
+        products: productsCount || 0,
+        npsAverage: npsAverage,
+        customers: customersCount || 0,
+      });
+    } catch (error) {
+      console.error("Erro ao carregar estatísticas:", error);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast({
@@ -59,11 +121,11 @@ const Dashboard = () => {
     );
   }
 
-  const stats = [
-    { icon: ShoppingCart, label: "Pedidos Hoje", value: "0", color: "text-primary" },
-    { icon: Package, label: "Produtos", value: "0", color: "text-secondary" },
-    { icon: Star, label: "NPS Médio", value: "-", color: "text-accent" },
-    { icon: Users, label: "Clientes", value: "0", color: "text-success" },
+  const statsDisplay = [
+    { icon: ShoppingCart, label: "Pedidos Hoje", value: stats.ordersToday.toString(), color: "text-primary" },
+    { icon: Package, label: "Produtos", value: stats.products.toString(), color: "text-secondary" },
+    { icon: Star, label: "NPS Médio", value: stats.npsAverage.toString(), color: "text-accent" },
+    { icon: Users, label: "Clientes", value: stats.customers.toString(), color: "text-success" },
   ];
 
   return (
@@ -113,7 +175,7 @@ const Dashboard = () => {
 
         {/* Stats Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
+          {statsDisplay.map((stat, index) => (
             <Card key={index} className="p-6 hover:shadow-medium transition-smooth">
               <div className="flex items-center justify-between mb-4">
                 <stat.icon className={`w-8 h-8 ${stat.color}`} />
