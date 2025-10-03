@@ -7,8 +7,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Loader2, Mail, Phone, ArrowLeft, MapPin, User } from "lucide-react";
+import { Loader2, Mail, Phone, ArrowLeft, MapPin, User, AlertCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { z } from "zod";
 import { useTenant } from "@/contexts/TenantContext";
 import {
@@ -52,6 +53,7 @@ const CustomerAuth = () => {
   const { items, getTotal, clearCart } = useCart();
   
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showDataForm, setShowDataForm] = useState(false);
   const [customerData, setCustomerData] = useState<{
     full_name: string;
     phone: string;
@@ -60,6 +62,11 @@ const CustomerAuth = () => {
   } | null>(null);
   const [paymentProvider, setPaymentProvider] = useState<string>("");
   const [processingOrder, setProcessingOrder] = useState(false);
+  const [formData, setFormData] = useState({
+    full_name: "",
+    phone: "",
+    address: "",
+  });
 
   // Remove auto-redirect - allow user to see auth page even if logged in
 
@@ -90,21 +97,107 @@ const CustomerAuth = () => {
         .eq("id", tenantId)
         .maybeSingle();
 
-      setCustomerData({
+      const data = {
         full_name: profile?.full_name || "",
         phone: profile?.phone || "",
         address: customer?.address || "",
         email: customer?.email || user.email || "",
+      };
+      
+      setCustomerData(data);
+      setFormData({
+        full_name: data.full_name,
+        phone: data.phone,
+        address: data.address || "",
       });
       
       setPaymentProvider(tenant?.payment_provider || "");
-      setShowConfirmDialog(true);
+      
+      // Verificar se todos os dados obrigatórios estão preenchidos
+      if (!data.full_name || !data.phone || !data.address) {
+        setShowDataForm(true);
+      } else {
+        setShowConfirmDialog(true);
+      }
     } catch (error: any) {
       toast({
         title: "Erro ao buscar dados",
         description: error.message,
         variant: "destructive",
       });
+    }
+  };
+
+  const handleSaveCustomerData = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProcessingOrder(true);
+
+    try {
+      // Validar campos
+      const fullNameValidation = fullNameSchema.safeParse(formData.full_name);
+      if (!fullNameValidation.success) {
+        throw new Error(fullNameValidation.error.errors[0].message);
+      }
+
+      const phoneValidation = phoneSchema.safeParse(formData.phone);
+      if (!phoneValidation.success) {
+        throw new Error(phoneValidation.error.errors[0].message);
+      }
+
+      if (!formData.address.trim()) {
+        throw new Error("Endereço é obrigatório");
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não encontrado");
+
+      // Atualizar profile
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          full_name: fullNameValidation.data,
+          phone: phoneValidation.data,
+        })
+        .eq("id", user.id);
+
+      if (profileError) throw profileError;
+
+      // Atualizar ou criar customer
+      const { error: customerError } = await supabase
+        .from("customers")
+        .upsert({
+          id: user.id,
+          tenant_id: tenantId,
+          full_name: fullNameValidation.data,
+          phone: phoneValidation.data,
+          address: formData.address.trim(),
+          email: customerData?.email,
+        });
+
+      if (customerError) throw customerError;
+
+      // Atualizar customerData
+      setCustomerData({
+        ...customerData,
+        full_name: fullNameValidation.data,
+        phone: phoneValidation.data,
+        address: formData.address.trim(),
+      });
+
+      toast({
+        title: "Dados salvos com sucesso!",
+      });
+
+      setShowDataForm(false);
+      setShowConfirmDialog(true);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao salvar dados",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingOrder(false);
     }
   };
 
@@ -730,6 +823,95 @@ const CustomerAuth = () => {
           </Card>
         </div>
       </div>
+
+      {/* Data Form Dialog */}
+      <Dialog open={showDataForm} onOpenChange={setShowDataForm}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl flex items-center gap-2">
+              <AlertCircle className="w-6 h-6 text-primary" />
+              Complete seus dados
+            </DialogTitle>
+            <DialogDescription>
+              Para finalizar o pedido, precisamos que você complete os dados obrigatórios abaixo
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleSaveCustomerData} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="data-fullname">
+                Nome Completo <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="data-fullname"
+                value={formData.full_name}
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                placeholder="Seu nome completo"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="data-phone">
+                Telefone <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="data-phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="+5511999999999"
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Formato: +5511999999999 (código do país + DDD + número)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="data-address">
+                Endereço de Entrega <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                id="data-address"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                placeholder="Rua, número, complemento, bairro, cidade - UF"
+                rows={3}
+                required
+              />
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowDataForm(false);
+                  navigate("/cart");
+                }}
+                disabled={processingOrder}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={processingOrder}
+                className="gradient-primary"
+              >
+                {processingOrder ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  "Continuar"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Confirmation Dialog */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
