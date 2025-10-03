@@ -49,7 +49,7 @@ const CustomerAuth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { tenantId } = useTenant();
-  const { getTotal } = useCart();
+  const { items, getTotal, clearCart } = useCart();
   
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [customerData, setCustomerData] = useState<{
@@ -110,26 +110,84 @@ const CustomerAuth = () => {
 
   const handleConfirmOrder = async () => {
     setProcessingOrder(true);
+    
     try {
-      // Se for pagamento na entrega, redireciona para página de confirmação
       if (paymentProvider === "cash_on_delivery") {
-        navigate("/cart");
+        // Criar pedido diretamente para pagamento na entrega
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user || !tenantId) {
+          toast({
+            title: "Erro",
+            description: "Usuário ou estabelecimento não encontrado",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Buscar dados do tenant para delivery_fee
+        const { data: tenant } = await supabase
+          .from("tenants")
+          .select("delivery_fee")
+          .eq("id", tenantId)
+          .single();
+
+        // Criar o pedido
+        const { data: order, error: orderError } = await supabase
+          .from("orders")
+          .insert({
+            tenant_id: tenantId,
+            user_id: user.id,
+            customer_name: customerData?.full_name || "",
+            customer_phone: customerData?.phone || "",
+            customer_address: customerData?.address || "",
+            total_amount: getTotal(),
+            delivery_fee: tenant?.delivery_fee || 0,
+            status: "Pedido Entrado"
+          })
+          .select()
+          .single();
+
+        if (orderError) throw orderError;
+
+        // Criar os itens do pedido
+        const orderItems = items.map(item => ({
+          order_id: order.id,
+          product_id: item.productId,
+          quantity: item.quantity,
+          unit_price: item.basePrice,
+          total_price: (item.basePrice + item.variations.reduce((sum, v) => sum + v.price_modifier, 0)) * item.quantity
+        }));
+
+        const { error: itemsError } = await supabase
+          .from("order_items")
+          .insert(orderItems);
+
+        if (itemsError) throw itemsError;
+
+        // Limpar carrinho e redirecionar
+        clearCart();
+        toast({
+          title: "Pedido realizado com sucesso!",
+          description: "Seu pedido foi registrado e está sendo preparado.",
+        });
+        navigate("/");
         setShowConfirmDialog(false);
       } else {
-        // Para outros provedores, redirecionar para página de pagamento
-        // TODO: Implementar integração com provedores de pagamento
+        // Redirecionar para página de pagamento do provedor
         toast({
           title: "Redirecionando para pagamento",
           description: `Processando pagamento via ${paymentProvider}`,
         });
-        // Por enquanto, apenas redireciona para o cart
+        // TODO: Implementar redirecionamento real para cada provedor
         navigate("/cart");
         setShowConfirmDialog(false);
       }
     } catch (error: any) {
+      console.error("Erro ao criar pedido:", error);
       toast({
-        title: "Erro ao processar pedido",
-        description: error.message,
+        title: "Erro ao criar pedido",
+        description: "Não foi possível finalizar seu pedido. Tente novamente.",
         variant: "destructive",
       });
     } finally {
