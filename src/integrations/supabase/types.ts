@@ -598,6 +598,10 @@ export type Database = {
           mobile_phone: string | null
           name: string
           neighborhood: string | null
+          payment_api_key: string | null
+          payment_api_secret: string | null
+          payment_merchant_id: string | null
+          payment_provider: string | null
           phone: string | null
           postal_code: string | null
           primary_color: string | null
@@ -620,6 +624,10 @@ export type Database = {
           mobile_phone?: string | null
           name: string
           neighborhood?: string | null
+          payment_api_key?: string | null
+          payment_api_secret?: string | null
+          payment_merchant_id?: string | null
+          payment_provider?: string | null
           phone?: string | null
           postal_code?: string | null
           primary_color?: string | null
@@ -642,6 +650,10 @@ export type Database = {
           mobile_phone?: string | null
           name?: string
           neighborhood?: string | null
+          payment_api_key?: string | null
+          payment_api_secret?: string | null
+          payment_merchant_id?: string | null
+          payment_provider?: string | null
           phone?: string | null
           postal_code?: string | null
           primary_color?: string | null

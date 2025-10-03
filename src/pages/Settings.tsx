@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save } from "lucide-react";
 import DeliveryMap from "@/components/DeliveryMap";
@@ -27,6 +29,10 @@ interface TenantData {
   delivery_fee: number;
   delivery_radius_km: number;
   free_delivery_min_order: number | null;
+  payment_provider: string | null;
+  payment_api_key: string | null;
+  payment_api_secret: string | null;
+  payment_merchant_id: string | null;
 }
 
 const Settings = () => {
@@ -117,6 +123,10 @@ const Settings = () => {
         delivery_fee: tenantData.delivery_fee,
         delivery_radius_km: tenantData.delivery_radius_km,
         free_delivery_min_order: tenantData.free_delivery_min_order,
+        payment_provider: tenantData.payment_provider,
+        payment_api_key: tenantData.payment_api_key,
+        payment_api_secret: tenantData.payment_api_secret,
+        payment_merchant_id: tenantData.payment_merchant_id,
       })
       .eq("id", tenantData.id);
 
@@ -163,7 +173,15 @@ const Settings = () => {
           <p className="text-muted-foreground">Edite as informações da sua pizzaria</p>
         </div>
 
-        <Card>
+        <Tabs defaultValue="general" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="general">Informações Gerais</TabsTrigger>
+            <TabsTrigger value="delivery">Entrega</TabsTrigger>
+            <TabsTrigger value="payment">Pagamentos</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="general">
+            <Card>
           <CardHeader>
             <CardTitle>Informações Gerais</CardTitle>
             <CardDescription>Atualize os dados da sua pizzaria</CardDescription>
@@ -328,8 +346,10 @@ const Settings = () => {
             </div>
           </CardContent>
         </Card>
+          </TabsContent>
 
-        <div className="grid lg:grid-cols-2 gap-6 mt-6">
+          <TabsContent value="delivery">
+            <div className="grid lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
               <CardTitle>Configurações de Entrega</CardTitle>
@@ -396,11 +416,99 @@ const Settings = () => {
             </CardContent>
           </Card>
 
-          <DeliveryMap
-            postalCode={tenantData.postal_code || ""}
-            deliveryRadiusKm={tenantData.delivery_radius_km}
-          />
-        </div>
+              <DeliveryMap
+                postalCode={tenantData.postal_code || ""}
+                deliveryRadiusKm={tenantData.delivery_radius_km}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="payment">
+            <Card>
+              <CardHeader>
+                <CardTitle>Configurações de Pagamento</CardTitle>
+                <CardDescription>Configure o provedor de pagamento da sua pizzaria</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="payment_provider">Provedor de Pagamento</Label>
+                  <Select
+                    value={tenantData.payment_provider || ""}
+                    onValueChange={(value) => setTenantData({ ...tenantData, payment_provider: value })}
+                  >
+                    <SelectTrigger id="payment_provider">
+                      <SelectValue placeholder="Selecione um provedor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="mercadopago">Mercado Pago</SelectItem>
+                      <SelectItem value="pagseguro">PagSeguro</SelectItem>
+                      <SelectItem value="stripe">Stripe</SelectItem>
+                      <SelectItem value="gerencianet">Gerencianet</SelectItem>
+                      <SelectItem value="ebanx">EBANX</SelectItem>
+                      <SelectItem value="webpay">Webpay</SelectItem>
+                      <SelectItem value="khipu">Khipu</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-muted-foreground">
+                    Escolha o provedor que será usado para processar pagamentos
+                  </p>
+                </div>
+
+                {tenantData.payment_provider && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="payment_api_key">API Key / Access Token</Label>
+                      <Input
+                        id="payment_api_key"
+                        type="password"
+                        value={tenantData.payment_api_key || ""}
+                        onChange={(e) => setTenantData({ ...tenantData, payment_api_key: e.target.value })}
+                        placeholder="Chave de API do provedor"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Chave pública ou access token fornecido pelo provedor
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="payment_api_secret">API Secret / Secret Key</Label>
+                      <Input
+                        id="payment_api_secret"
+                        type="password"
+                        value={tenantData.payment_api_secret || ""}
+                        onChange={(e) => setTenantData({ ...tenantData, payment_api_secret: e.target.value })}
+                        placeholder="Chave secreta do provedor"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Chave secreta fornecida pelo provedor
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="payment_merchant_id">Merchant ID / Vendor ID (Opcional)</Label>
+                      <Input
+                        id="payment_merchant_id"
+                        value={tenantData.payment_merchant_id || ""}
+                        onChange={(e) => setTenantData({ ...tenantData, payment_merchant_id: e.target.value })}
+                        placeholder="ID do comerciante"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Identificador do comerciante (se aplicável ao provedor)
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                <div className="pt-4">
+                  <Button onClick={handleSave} disabled={saving} className="w-full">
+                    <Save className="w-4 h-4 mr-2" />
+                    {saving ? "Salvando..." : "Salvar Alterações"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
