@@ -266,13 +266,110 @@ const CustomerAuth = () => {
         });
         navigate("/");
         setShowConfirmDialog(false);
+      } else if (paymentProvider === "mercadopago") {
+        // Integração com Mercado Pago
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user || !tenantId) {
+          toast({
+            title: "Erro",
+            description: "Usuário ou estabelecimento não encontrado",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Buscar dados do tenant para delivery_fee
+        const { data: tenant } = await supabase
+          .from("tenants")
+          .select("delivery_fee")
+          .eq("id", tenantId)
+          .single();
+
+        // Criar o pedido com status "pending"
+        const { data: order, error: orderError } = await supabase
+          .from("orders")
+          .insert({
+            tenant_id: tenantId,
+            user_id: user.id,
+            customer_name: customerData?.full_name || "",
+            customer_phone: customerData?.phone || "",
+            customer_address: customerData?.address || "",
+            total_amount: getTotal(),
+            delivery_fee: tenant?.delivery_fee || 0,
+            status: "pending",
+            payment_status: "pending"
+          })
+          .select()
+          .single();
+
+        if (orderError) throw orderError;
+
+        // Criar os itens do pedido
+        const orderItems = items.map(item => ({
+          order_id: order.id,
+          product_id: item.productId,
+          quantity: item.quantity,
+          unit_price: item.basePrice,
+          total_price: (item.basePrice + item.variations.reduce((sum, v) => sum + v.price_modifier, 0)) * item.quantity
+        }));
+
+        const { error: itemsError } = await supabase
+          .from("order_items")
+          .insert(orderItems);
+
+        if (itemsError) throw itemsError;
+
+        // Criar pagamento no Mercado Pago
+        toast({
+          title: "Processando pagamento",
+          description: "Redirecionando para o Mercado Pago...",
+        });
+
+        const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
+          'create-mercadopago-payment',
+          {
+            body: {
+              orderId: order.id,
+              items: items.map(item => ({
+                name: item.name,
+                quantity: item.quantity,
+                unit_price: item.basePrice + item.variations.reduce((sum, v) => sum + v.price_modifier, 0),
+              })),
+              total: getTotal(),
+              customerData: {
+                full_name: customerData?.full_name || "",
+                email: customerData?.email || user.email || "",
+                phone: customerData?.phone || "",
+                address: customerData?.address || "",
+              }
+            }
+          }
+        );
+
+        if (paymentError) {
+          console.error("Erro ao criar pagamento:", paymentError);
+          throw new Error("Não foi possível processar o pagamento. Tente novamente.");
+        }
+
+        // Atualizar pedido com preferenceId
+        await supabase
+          .from("orders")
+          .update({ payment_id: paymentData.preferenceId })
+          .eq("id", order.id);
+
+        // Limpar carrinho
+        clearCart();
+        
+        // Redirecionar para checkout do Mercado Pago
+        window.location.href = paymentData.checkoutUrl;
+        setShowConfirmDialog(false);
       } else {
         // Redirecionar para página de pagamento do provedor
         toast({
           title: "Redirecionando para pagamento",
           description: `Processando pagamento via ${paymentProvider}`,
         });
-        // TODO: Implementar redirecionamento real para cada provedor
         navigate("/cart");
         setShowConfirmDialog(false);
       }

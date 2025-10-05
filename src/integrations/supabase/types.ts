@@ -291,6 +291,8 @@ export type Database = {
           delivery_fee: number | null
           id: string
           notes: string | null
+          payment_id: string | null
+          payment_status: string | null
           status: string | null
           tenant_id: string
           total_amount: number
@@ -305,6 +307,8 @@ export type Database = {
           delivery_fee?: number | null
           id?: string
           notes?: string | null
+          payment_id?: string | null
+          payment_status?: string | null
           status?: string | null
           tenant_id: string
           total_amount: number
@@ -319,6 +323,8 @@ export type Database = {
           delivery_fee?: number | null
           id?: string
           notes?: string | null
+          payment_id?: string | null
+          payment_status?: string | null
           status?: string | null
           tenant_id?: string
           total_amount?: number

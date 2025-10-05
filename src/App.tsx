@@ -19,6 +19,9 @@ import Customers from "./pages/Customers";
 import Cart from "./pages/Cart";
 import CustomerAuth from "./pages/CustomerAuth";
 import CompleteProfile from "./pages/CompleteProfile";
+import OrderSuccess from "./pages/OrderSuccess";
+import OrderFailed from "./pages/OrderFailed";
+import OrderPending from "./pages/OrderPending";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +47,9 @@ const App = () => (
           <Route path="/cart" element={<Cart />} />
           <Route path="/customer-auth" element={<CustomerAuth />} />
           <Route path="/complete-profile" element={<CompleteProfile />} />
+          <Route path="/order-success" element={<OrderSuccess />} />
+          <Route path="/order-failed" element={<OrderFailed />} />
+          <Route path="/order-pending" element={<OrderPending />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/customers" element={<Customers />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
