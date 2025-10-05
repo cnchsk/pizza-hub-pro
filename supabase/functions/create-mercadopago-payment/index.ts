@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,14 +13,26 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId, items, total, customerData } = await req.json();
+    const { orderId, items, total, customerData, tenantId } = await req.json();
 
     console.log('Creating Mercado Pago payment for order:', orderId);
 
-    const accessToken = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN');
-    if (!accessToken) {
-      throw new Error('MERCADOPAGO_ACCESS_TOKEN não configurado');
+    // Buscar access token do tenant
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data: tenant, error: tenantError } = await supabase
+      .from('tenants')
+      .select('mercadopago_access_token')
+      .eq('id', tenantId)
+      .single();
+
+    if (tenantError || !tenant?.mercadopago_access_token) {
+      throw new Error('Access Token do Mercado Pago não configurado para este estabelecimento');
     }
+
+    const accessToken = tenant.mercadopago_access_token;
 
     // Preparar itens para o Mercado Pago
     const mpItems = items.map((item: any) => ({

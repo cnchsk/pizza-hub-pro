@@ -601,6 +601,7 @@ export type Database = {
           google_maps_api_key: string | null
           id: string
           logo_url: string | null
+          mercadopago_access_token: string | null
           mobile_phone: string | null
           name: string
           neighborhood: string | null
@@ -627,6 +628,7 @@ export type Database = {
           google_maps_api_key?: string | null
           id?: string
           logo_url?: string | null
+          mercadopago_access_token?: string | null
           mobile_phone?: string | null
           name: string
           neighborhood?: string | null
@@ -653,6 +655,7 @@ export type Database = {
           google_maps_api_key?: string | null
           id?: string
           logo_url?: string | null
+          mercadopago_access_token?: string | null
           mobile_phone?: string | null
           name?: string
           neighborhood?: string | null

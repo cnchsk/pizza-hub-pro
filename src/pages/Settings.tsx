@@ -33,6 +33,7 @@ interface TenantData {
   payment_api_key: string | null;
   payment_api_secret: string | null;
   payment_merchant_id: string | null;
+  mercadopago_access_token: string | null;
 }
 
 const Settings = () => {
@@ -457,46 +458,66 @@ const Settings = () => {
 
                 {tenantData.payment_provider && tenantData.payment_provider !== "cash_on_delivery" && (
                   <>
-                    <div className="space-y-2">
-                      <Label htmlFor="payment_api_key">API Key / Access Token</Label>
-                      <Input
-                        id="payment_api_key"
-                        type="password"
-                        value={tenantData.payment_api_key || ""}
-                        onChange={(e) => setTenantData({ ...tenantData, payment_api_key: e.target.value })}
-                        placeholder="Chave de API do provedor"
-                      />
-                      <p className="text-sm text-muted-foreground">
-                        Chave pública ou access token fornecido pelo provedor
-                      </p>
-                    </div>
+                    {tenantData.payment_provider === "mercadopago" && (
+                      <div className="space-y-2">
+                        <Label htmlFor="mercadopago_access_token">Access Token do Mercado Pago</Label>
+                        <Input
+                          id="mercadopago_access_token"
+                          type="password"
+                          value={tenantData.mercadopago_access_token || ""}
+                          onChange={(e) => setTenantData({ ...tenantData, mercadopago_access_token: e.target.value })}
+                          placeholder="APP_USR-XXXX-XXXX-XXXX"
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Access Token obtido no painel do Mercado Pago (Seu Negócio → Credenciais)
+                        </p>
+                      </div>
+                    )}
 
-                    <div className="space-y-2">
-                      <Label htmlFor="payment_api_secret">API Secret / Secret Key</Label>
-                      <Input
-                        id="payment_api_secret"
-                        type="password"
-                        value={tenantData.payment_api_secret || ""}
-                        onChange={(e) => setTenantData({ ...tenantData, payment_api_secret: e.target.value })}
-                        placeholder="Chave secreta do provedor"
-                      />
-                      <p className="text-sm text-muted-foreground">
-                        Chave secreta fornecida pelo provedor
-                      </p>
-                    </div>
+                    {tenantData.payment_provider !== "mercadopago" && (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="payment_api_key">API Key / Access Token</Label>
+                          <Input
+                            id="payment_api_key"
+                            type="password"
+                            value={tenantData.payment_api_key || ""}
+                            onChange={(e) => setTenantData({ ...tenantData, payment_api_key: e.target.value })}
+                            placeholder="Chave de API do provedor"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Chave pública ou access token fornecido pelo provedor
+                          </p>
+                        </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="payment_merchant_id">Merchant ID / Vendor ID (Opcional)</Label>
-                      <Input
-                        id="payment_merchant_id"
-                        value={tenantData.payment_merchant_id || ""}
-                        onChange={(e) => setTenantData({ ...tenantData, payment_merchant_id: e.target.value })}
-                        placeholder="ID do comerciante"
-                      />
-                      <p className="text-sm text-muted-foreground">
-                        Identificador do comerciante (se aplicável ao provedor)
-                      </p>
-                    </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="payment_api_secret">API Secret / Secret Key</Label>
+                          <Input
+                            id="payment_api_secret"
+                            type="password"
+                            value={tenantData.payment_api_secret || ""}
+                            onChange={(e) => setTenantData({ ...tenantData, payment_api_secret: e.target.value })}
+                            placeholder="Chave secreta do provedor"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Chave secreta fornecida pelo provedor
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="payment_merchant_id">Merchant ID / Vendor ID (Opcional)</Label>
+                          <Input
+                            id="payment_merchant_id"
+                            value={tenantData.payment_merchant_id || ""}
+                            onChange={(e) => setTenantData({ ...tenantData, payment_merchant_id: e.target.value })}
+                            placeholder="ID do comerciante"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Identificador do comerciante (se aplicável ao provedor)
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </>
                 )}
 

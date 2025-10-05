@@ -331,6 +331,7 @@ const CustomerAuth = () => {
           {
             body: {
               orderId: order.id,
+              tenantId: tenantId,
               items: items.map(item => ({
                 name: item.name,
                 quantity: item.quantity,
