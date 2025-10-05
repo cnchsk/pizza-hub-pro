@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const OrderSuccess = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get("orderId");
+  const testMode = searchParams.get("testMode") === "true";
   const [orderNumber, setOrderNumber] = useState<string>("");
 
   useEffect(() => {
@@ -36,12 +38,26 @@ const OrderSuccess = () => {
           <div className="flex justify-center mb-4">
             <CheckCircle2 className="w-16 h-16 text-green-500" />
           </div>
-          <CardTitle className="text-2xl">Pagamento Confirmado!</CardTitle>
+          <CardTitle className="text-2xl">
+            {testMode ? "Pedido Criado!" : "Pagamento Confirmado!"}
+          </CardTitle>
           <CardDescription>
-            Seu pedido foi confirmado e está sendo preparado.
+            {testMode 
+              ? "Seu pedido foi registrado em modo teste."
+              : "Seu pedido foi confirmado e está sendo preparado."
+            }
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {testMode && (
+            <Alert className="bg-yellow-50 border-yellow-200">
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-800">
+                <strong>Modo Teste:</strong> Este pedido não foi validado pelo Mercado Pago. 
+                Configure o modo produção nas configurações para processar pagamentos reais.
+              </AlertDescription>
+            </Alert>
+          )}
           {orderNumber && (
             <div className="text-center p-4 bg-muted rounded-lg">
               <p className="text-sm text-muted-foreground mb-1">Número do Pedido</p>
@@ -49,7 +65,10 @@ const OrderSuccess = () => {
             </div>
           )}
           <p className="text-sm text-center text-muted-foreground">
-            Você receberá atualizações sobre seu pedido em breve.
+            {testMode 
+              ? "Este é um pedido de teste para verificar o fluxo do sistema."
+              : "Você receberá atualizações sobre seu pedido em breve."
+            }
           </p>
           <Button 
             onClick={() => navigate("/")} 

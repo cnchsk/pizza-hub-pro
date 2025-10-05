@@ -279,14 +279,16 @@ const CustomerAuth = () => {
           return;
         }
 
-        // Buscar dados do tenant para delivery_fee
+        // Buscar dados do tenant para delivery_fee e modo teste
         const { data: tenant } = await supabase
           .from("tenants")
-          .select("delivery_fee")
+          .select("delivery_fee, mercadopago_test_mode")
           .eq("id", tenantId)
           .single();
 
-        // Criar o pedido com status "pending"
+        const isTestMode = tenant?.mercadopago_test_mode === true;
+
+        // Criar o pedido
         const { data: order, error: orderError } = await supabase
           .from("orders")
           .insert({
@@ -297,8 +299,8 @@ const CustomerAuth = () => {
             customer_address: customerData?.address || "",
             total_amount: getTotal(),
             delivery_fee: tenant?.delivery_fee || 0,
-            status: "pending",
-            payment_status: "pending"
+            status: isTestMode ? "new" : "pending",
+            payment_status: isTestMode ? "test" : "pending"
           })
           .select()
           .single();
@@ -320,51 +322,62 @@ const CustomerAuth = () => {
 
         if (itemsError) throw itemsError;
 
-        // Criar pagamento no Mercado Pago
-        toast({
-          title: "Processando pagamento",
-          description: "Redirecionando para o Mercado Pago...",
-        });
+        if (isTestMode) {
+          // Modo teste - finalizar localmente sem chamar Mercado Pago
+          clearCart();
+          toast({
+            title: "Pedido criado em modo teste",
+            description: "O pedido foi registrado mas não foi enviado para o Mercado Pago.",
+          });
+          navigate(`/order-success?orderId=${order.id}&testMode=true`);
+          setShowConfirmDialog(false);
+        } else {
+          // Modo produção - criar pagamento no Mercado Pago
+          toast({
+            title: "Processando pagamento",
+            description: "Redirecionando para o Mercado Pago...",
+          });
 
-        const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
-          'create-mercadopago-payment',
-          {
-            body: {
-              orderId: order.id,
-              tenantId: tenantId,
-              items: items.map(item => ({
-                name: item.name,
-                quantity: item.quantity,
-                unit_price: item.basePrice + item.variations.reduce((sum, v) => sum + v.price_modifier, 0),
-              })),
-              total: getTotal(),
-              customerData: {
-                full_name: customerData?.full_name || "",
-                email: customerData?.email || user.email || "",
-                phone: customerData?.phone || "",
-                address: customerData?.address || "",
+          const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
+            'create-mercadopago-payment',
+            {
+              body: {
+                orderId: order.id,
+                tenantId: tenantId,
+                items: items.map(item => ({
+                  name: item.name,
+                  quantity: item.quantity,
+                  unit_price: item.basePrice + item.variations.reduce((sum, v) => sum + v.price_modifier, 0),
+                })),
+                total: getTotal(),
+                customerData: {
+                  full_name: customerData?.full_name || "",
+                  email: customerData?.email || user.email || "",
+                  phone: customerData?.phone || "",
+                  address: customerData?.address || "",
+                }
               }
             }
+          );
+
+          if (paymentError) {
+            console.error("Erro ao criar pagamento:", paymentError);
+            throw new Error("Não foi possível processar o pagamento. Tente novamente.");
           }
-        );
 
-        if (paymentError) {
-          console.error("Erro ao criar pagamento:", paymentError);
-          throw new Error("Não foi possível processar o pagamento. Tente novamente.");
+          // Atualizar pedido com preferenceId
+          await supabase
+            .from("orders")
+            .update({ payment_id: paymentData.preferenceId })
+            .eq("id", order.id);
+
+          // Limpar carrinho
+          clearCart();
+          
+          // Redirecionar para checkout do Mercado Pago
+          window.location.href = paymentData.checkoutUrl;
+          setShowConfirmDialog(false);
         }
-
-        // Atualizar pedido com preferenceId
-        await supabase
-          .from("orders")
-          .update({ payment_id: paymentData.preferenceId })
-          .eq("id", order.id);
-
-        // Limpar carrinho
-        clearCart();
-        
-        // Redirecionar para checkout do Mercado Pago
-        window.location.href = paymentData.checkoutUrl;
-        setShowConfirmDialog(false);
       } else {
         // Redirecionar para página de pagamento do provedor
         toast({

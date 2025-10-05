@@ -34,6 +34,7 @@ interface TenantData {
   payment_api_secret: string | null;
   payment_merchant_id: string | null;
   mercadopago_access_token: string | null;
+  mercadopago_test_mode: boolean;
 }
 
 const Settings = () => {
@@ -128,6 +129,8 @@ const Settings = () => {
         payment_api_key: tenantData.payment_api_key,
         payment_api_secret: tenantData.payment_api_secret,
         payment_merchant_id: tenantData.payment_merchant_id,
+        mercadopago_access_token: tenantData.mercadopago_access_token,
+        mercadopago_test_mode: tenantData.mercadopago_test_mode,
       })
       .eq("id", tenantData.id);
 
@@ -459,19 +462,37 @@ const Settings = () => {
                 {tenantData.payment_provider && tenantData.payment_provider !== "cash_on_delivery" && (
                   <>
                     {tenantData.payment_provider === "mercadopago" && (
-                      <div className="space-y-2">
-                        <Label htmlFor="mercadopago_access_token">Access Token do Mercado Pago</Label>
-                        <Input
-                          id="mercadopago_access_token"
-                          type="password"
-                          value={tenantData.mercadopago_access_token || ""}
-                          onChange={(e) => setTenantData({ ...tenantData, mercadopago_access_token: e.target.value })}
-                          placeholder="APP_USR-XXXX-XXXX-XXXX"
-                        />
-                        <p className="text-sm text-muted-foreground">
-                          Access Token obtido no painel do Mercado Pago (Seu Negócio → Credenciais)
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="mercadopago_access_token">Access Token do Mercado Pago</Label>
+                          <Input
+                            id="mercadopago_access_token"
+                            type="password"
+                            value={tenantData.mercadopago_access_token || ""}
+                            onChange={(e) => setTenantData({ ...tenantData, mercadopago_access_token: e.target.value })}
+                            placeholder="APP_USR-XXXX-XXXX-XXXX"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Access Token obtido no painel do Mercado Pago (Seu Negócio → Credenciais)
+                          </p>
+                        </div>
+
+                        <div className="flex items-center space-x-2 p-4 bg-muted/50 rounded-lg">
+                          <input
+                            type="checkbox"
+                            id="mercadopago_test_mode"
+                            checked={tenantData.mercadopago_test_mode}
+                            onChange={(e) => setTenantData({ ...tenantData, mercadopago_test_mode: e.target.checked })}
+                            className="h-4 w-4"
+                          />
+                          <Label htmlFor="mercadopago_test_mode" className="cursor-pointer">
+                            Modo Teste
+                          </Label>
+                        </div>
+                        <p className="text-sm text-muted-foreground -mt-2">
+                          No modo teste, os pedidos serão finalizados localmente sem validação do Mercado Pago. Útil para testar o fluxo antes de colocar em produção.
                         </p>
-                      </div>
+                      </>
                     )}
 
                     {tenantData.payment_provider !== "mercadopago" && (
