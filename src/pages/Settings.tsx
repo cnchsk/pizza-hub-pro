@@ -34,6 +34,7 @@ interface TenantData {
   payment_api_secret: string | null;
   payment_merchant_id: string | null;
   mercadopago_access_token: string | null;
+  mercadopago_test_mode: boolean;
 }
 
 const Settings = () => {
@@ -459,19 +460,34 @@ const Settings = () => {
                 {tenantData.payment_provider && tenantData.payment_provider !== "cash_on_delivery" && (
                   <>
                     {tenantData.payment_provider === "mercadopago" && (
-                      <div className="space-y-2">
-                        <Label htmlFor="mercadopago_access_token">Access Token do Mercado Pago</Label>
-                        <Input
-                          id="mercadopago_access_token"
-                          type="password"
-                          value={tenantData.mercadopago_access_token || ""}
-                          onChange={(e) => setTenantData({ ...tenantData, mercadopago_access_token: e.target.value })}
-                          placeholder="APP_USR-XXXX-XXXX-XXXX"
-                        />
-                        <p className="text-sm text-muted-foreground">
-                          Access Token obtido no painel do Mercado Pago (Seu Negócio → Credenciais)
-                        </p>
-                      </div>
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="mercadopago_access_token">Access Token do Mercado Pago</Label>
+                          <Input
+                            id="mercadopago_access_token"
+                            type="password"
+                            value={tenantData.mercadopago_access_token || ""}
+                            onChange={(e) => setTenantData({ ...tenantData, mercadopago_access_token: e.target.value })}
+                            placeholder="APP_USR-XXXX-XXXX-XXXX"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Access Token obtido no painel do Mercado Pago (Seu Negócio → Credenciais)
+                          </p>
+                        </div>
+
+                        <div className="flex items-center space-x-2 p-4 bg-muted rounded-lg">
+                          <input
+                            type="checkbox"
+                            id="mercadopago_test_mode"
+                            checked={tenantData.mercadopago_test_mode}
+                            onChange={(e) => setTenantData({ ...tenantData, mercadopago_test_mode: e.target.checked })}
+                            className="h-4 w-4"
+                          />
+                          <Label htmlFor="mercadopago_test_mode" className="cursor-pointer">
+                            Modo Teste (pedidos não serão validados pelo Mercado Pago)
+                          </Label>
+                        </div>
+                      </>
                     )}
 
                     {tenantData.payment_provider !== "mercadopago" && (

@@ -602,6 +602,7 @@ export type Database = {
           id: string
           logo_url: string | null
           mercadopago_access_token: string | null
+          mercadopago_test_mode: boolean | null
           mobile_phone: string | null
           name: string
           neighborhood: string | null
@@ -629,6 +630,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           mercadopago_access_token?: string | null
+          mercadopago_test_mode?: boolean | null
           mobile_phone?: string | null
           name: string
           neighborhood?: string | null
@@ -656,6 +658,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           mercadopago_access_token?: string | null
+          mercadopago_test_mode?: boolean | null
           mobile_phone?: string | null
           name?: string
           neighborhood?: string | null
