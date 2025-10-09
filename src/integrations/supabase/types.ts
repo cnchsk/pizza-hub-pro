@@ -668,6 +668,8 @@ export type Database = {
           primary_color: string | null
           secondary_color: string | null
           state: string | null
+          stripe_publishable_key: string | null
+          stripe_secret_key: string | null
           subdomain: string
           updated_at: string
         }
@@ -696,6 +698,8 @@ export type Database = {
           primary_color?: string | null
           secondary_color?: string | null
           state?: string | null
+          stripe_publishable_key?: string | null
+          stripe_secret_key?: string | null
           subdomain: string
           updated_at?: string
         }
@@ -724,6 +728,8 @@ export type Database = {
           primary_color?: string | null
           secondary_color?: string | null
           state?: string | null
+          stripe_publishable_key?: string | null
+          stripe_secret_key?: string | null
           subdomain?: string
           updated_at?: string
         }

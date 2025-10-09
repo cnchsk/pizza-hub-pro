@@ -35,6 +35,8 @@ interface TenantData {
   payment_merchant_id: string | null;
   mercadopago_access_token: string | null;
   mercadopago_test_mode: boolean;
+  stripe_publishable_key: string | null;
+  stripe_secret_key: string | null;
 }
 
 const Settings = () => {
@@ -131,6 +133,8 @@ const Settings = () => {
         payment_merchant_id: tenantData.payment_merchant_id,
         mercadopago_access_token: tenantData.mercadopago_access_token,
         mercadopago_test_mode: tenantData.mercadopago_test_mode,
+        stripe_publishable_key: tenantData.stripe_publishable_key,
+        stripe_secret_key: tenantData.stripe_secret_key,
       })
       .eq("id", tenantData.id);
 
@@ -495,7 +499,50 @@ const Settings = () => {
                       </>
                     )}
 
-                    {tenantData.payment_provider !== "mercadopago" && (
+                    {tenantData.payment_provider === "stripe" && (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="stripe_publishable_key">Stripe Publishable Key</Label>
+                          <Input
+                            id="stripe_publishable_key"
+                            type="text"
+                            value={tenantData.stripe_publishable_key || ""}
+                            onChange={(e) => setTenantData({ ...tenantData, stripe_publishable_key: e.target.value })}
+                            placeholder="pk_test_XXXXXXXXXXXX ou pk_live_XXXXXXXXXXXX"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Chave pública do Stripe (começa com pk_test_ ou pk_live_)
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="stripe_secret_key">Stripe Secret Key</Label>
+                          <Input
+                            id="stripe_secret_key"
+                            type="password"
+                            value={tenantData.stripe_secret_key || ""}
+                            onChange={(e) => setTenantData({ ...tenantData, stripe_secret_key: e.target.value })}
+                            placeholder="sk_test_XXXXXXXXXXXX ou sk_live_XXXXXXXXXXXX"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Chave secreta do Stripe (começa com sk_test_ ou sk_live_)
+                          </p>
+                        </div>
+
+                        <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+                          <p className="text-sm font-medium">Como obter suas chaves do Stripe:</p>
+                          <ol className="text-sm text-muted-foreground list-decimal list-inside space-y-1">
+                            <li>Acesse o <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener noreferrer" className="underline">Dashboard do Stripe</a></li>
+                            <li>Navegue até "Developers" → "API keys"</li>
+                            <li>Copie as chaves Publishable e Secret</li>
+                            <li>Use as chaves de teste (test) para desenvolvimento</li>
+                            <li>Use as chaves ao vivo (live) apenas em produção</li>
+                          </ol>
+                        </div>
+                      </>
+                    )}
+
+                    {tenantData.payment_provider !== "mercadopago" && tenantData.payment_provider !== "stripe" && (
                       <>
                         <div className="space-y-2">
                           <Label htmlFor="payment_api_key">API Key / Access Token</Label>
