@@ -5,7 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
 import { TenantProvider } from "@/contexts/TenantContext";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import Landing from "./pages/Landing";
+import Subscription from "./pages/Subscription";
 import Onboarding from "./pages/Onboarding";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -30,10 +32,11 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <TenantProvider>
-        <CartProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+        <SubscriptionProvider>
+          <CartProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
           <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/onboarding" element={<Onboarding />} />
@@ -52,11 +55,13 @@ const App = () => (
           <Route path="/order-pending" element={<OrderPending />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/customers" element={<Customers />} />
+          <Route path="/subscription" element={<Subscription />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-        </CartProvider>
+          </CartProvider>
+        </SubscriptionProvider>
       </TenantProvider>
     </TooltipProvider>
   </QueryClientProvider>
