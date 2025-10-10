@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.mercadopago-webhook]
 verify_jwt = false
+
+[functions.create-stripe-payment]
+verify_jwt = true

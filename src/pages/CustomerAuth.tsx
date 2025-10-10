@@ -378,6 +378,104 @@ const CustomerAuth = () => {
           window.location.href = paymentData.checkoutUrl;
           setShowConfirmDialog(false);
         }
+      } else if (paymentProvider === "stripe") {
+        // Integração com Stripe
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user || !tenantId) {
+          toast({
+            title: "Erro",
+            description: "Usuário ou estabelecimento não encontrado",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Buscar dados do tenant para delivery_fee
+        const { data: tenant } = await supabase
+          .from("tenants")
+          .select("delivery_fee")
+          .eq("id", tenantId)
+          .single();
+
+        // Criar o pedido
+        const { data: order, error: orderError } = await supabase
+          .from("orders")
+          .insert({
+            tenant_id: tenantId,
+            user_id: user.id,
+            customer_name: customerData?.full_name || "",
+            customer_phone: customerData?.phone || "",
+            customer_address: customerData?.address || "",
+            total_amount: getTotal(),
+            delivery_fee: tenant?.delivery_fee || 0,
+            status: "pending",
+            payment_status: "pending"
+          })
+          .select()
+          .single();
+
+        if (orderError) throw orderError;
+
+        // Criar os itens do pedido
+        const orderItems = items.map(item => ({
+          order_id: order.id,
+          product_id: item.productId,
+          quantity: item.quantity,
+          unit_price: item.basePrice,
+          total_price: (item.basePrice + item.variations.reduce((sum, v) => sum + v.price_modifier, 0)) * item.quantity
+        }));
+
+        const { error: itemsError } = await supabase
+          .from("order_items")
+          .insert(orderItems);
+
+        if (itemsError) throw itemsError;
+
+        // Criar sessão de pagamento no Stripe
+        toast({
+          title: "Processando pagamento",
+          description: "Redirecionando para o Stripe...",
+        });
+
+        const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
+          'create-stripe-payment',
+          {
+            body: {
+              orderId: order.id,
+              items: items.map(item => ({
+                name: item.name,
+                quantity: item.quantity,
+                unit_price: item.basePrice + item.variations.reduce((sum, v) => sum + v.price_modifier, 0),
+                variations: item.variations,
+              })),
+              customerData: {
+                full_name: customerData?.full_name || "",
+                email: customerData?.email || user.email || "",
+                phone: customerData?.phone || "",
+                address: customerData?.address || "",
+              }
+            }
+          }
+        );
+
+        if (paymentError) {
+          console.error("Erro ao criar pagamento:", paymentError);
+          throw new Error("Não foi possível processar o pagamento. Tente novamente.");
+        }
+
+        // Atualizar pedido com sessionId
+        await supabase
+          .from("orders")
+          .update({ payment_id: paymentData.sessionId })
+          .eq("id", order.id);
+
+        // Limpar carrinho
+        clearCart();
+        
+        // Redirecionar para checkout do Stripe
+        window.location.href = paymentData.checkoutUrl;
+        setShowConfirmDialog(false);
       } else {
         // Redirecionar para página de pagamento do provedor
         toast({
